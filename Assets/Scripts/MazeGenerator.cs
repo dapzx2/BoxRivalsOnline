@@ -6,18 +6,15 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(PhotonView))]
 public class MazeGenerator : MonoBehaviourPun
 {
-    [Header("Maze Settings")]
     public int width = 20;
     public int height = 20;
     public float cellSize = 2f;
     public GameObject wallPrefab;
-
-    [Header("Arena Settings")]
     public Transform arenaCenter;
 
     private bool[,] visited;
     private List<Vector3> floorPositions = new List<Vector3>();
-    public bool IsMazeReady { get; private set; } = false;
+    public bool IsMazeReady { get; private set; }
 
     private readonly Vector2Int[] directions = {
         new Vector2Int(0, 1), new Vector2Int(0, -1),
@@ -44,13 +41,13 @@ public class MazeGenerator : MonoBehaviourPun
         int seed = Random.Range(0, 100000);
         PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "MazeSeed", seed } });
         GenerateMaze(seed);
-        photonView?.RPC("SyncMazeSeed", RpcTarget.OthersBuffered, seed);
+        photonView?.RPC(nameof(SyncMazeSeed), RpcTarget.OthersBuffered, seed);
     }
 
     [PunRPC]
     public void SyncMazeSeed(int seed) => GenerateMaze(seed);
 
-    private void GenerateMaze(int seed)
+    void GenerateMaze(int seed)
     {
         Random.InitState(seed);
         ClearMaze();
@@ -60,7 +57,7 @@ public class MazeGenerator : MonoBehaviourPun
         IsMazeReady = true;
     }
 
-    private void ClearMaze()
+    void ClearMaze()
     {
         foreach (Transform child in transform)
             if (child.gameObject.name.Contains("Wall")) Destroy(child.gameObject);
@@ -68,14 +65,14 @@ public class MazeGenerator : MonoBehaviourPun
         IsMazeReady = false;
     }
 
-    private void InitializeMaze()
+    void InitializeMaze()
     {
         if (width % 2 == 0) width++;
         if (height % 2 == 0) height++;
         visited = new bool[width, height];
     }
 
-    private void GenerateMazeRecursive(Vector2Int current)
+    void GenerateMazeRecursive(Vector2Int current)
     {
         visited[current.x, current.y] = true;
         floorPositions.Add(GetWorldPosition(current));
@@ -94,26 +91,22 @@ public class MazeGenerator : MonoBehaviourPun
         }
     }
 
-    private void BuildMaze()
+    void BuildMaze()
     {
         float startX = -(width * cellSize) / 2f + (arenaCenter != null ? arenaCenter.position.x : 0);
         float startZ = -(height * cellSize) / 2f + (arenaCenter != null ? arenaCenter.position.z : 0);
 
         for (int x = 0; x < width; x++)
-        {
             for (int z = 0; z < height; z++)
-            {
                 if (!visited[x, z])
                 {
                     Vector3 pos = new Vector3(startX + x * cellSize, wallPrefab.transform.localScale.y / 2, startZ + z * cellSize);
                     GameObject wall = Instantiate(wallPrefab, pos, Quaternion.identity, transform);
                     wall.name = $"Wall_{x}_{z}";
                 }
-            }
-        }
     }
 
-    private bool IsInside(Vector2Int pos) => pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height;
+    bool IsInside(Vector2Int pos) => pos.x >= 0 && pos.x < width && pos.y >= 0 && pos.y < height;
 
     public Vector3 GetWorldPosition(Vector2Int gridPos, float y = 0f)
     {
@@ -124,7 +117,7 @@ public class MazeGenerator : MonoBehaviourPun
 
     public List<Vector3> GetFloorPositions() => floorPositions;
 
-    private void Shuffle<T>(T[] array)
+    void Shuffle<T>(T[] array)
     {
         int n = array.Length;
         while (n > 1) { n--; int k = Random.Range(0, n + 1); (array[k], array[n]) = (array[n], array[k]); }

@@ -20,4 +20,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level2Scene.unity
     guid: 0cb830b64df962046a828c522a2bc369
+  - enabled: 1
+    path: Assets/Scenes/MapRoulette.unity
+    guid: b1ce104206ecc9c4d81ff3ce3e577dd3
+  - enabled: 1
+    path: Assets/Scenes/Level3_SkyPlatforms.unity
+    guid: 4df4167a2b776c4418167eea7da89ee9
   m_configObjects: {}

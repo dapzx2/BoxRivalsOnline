@@ -2,49 +2,35 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    // Target yang akan diikuti (diisi otomatis oleh script Player)
-    public Transform currentTarget; 
-    
-    // Apakah mouse bisa mengontrol kamera (diisi otomatis oleh script Player)
-    public bool isControlActive = false; 
+    public Transform currentTarget;
+    public bool isControlActive;
 
-    [Header("Pengaturan Kamera")]
-    public float jarak = 5.0f;
-    public float kecepatanPutar = 2.0f;
-    public float batasAtas = 80.0f;
-    public float batasBawah = -40.0f;
+    [Header("Camera")]
+    public float jarak = 5f;
+    public float kecepatanPutar = 2f;
+    public float batasAtas = 80f;
+    public float batasBawah = -40f;
 
-    [Header("Pengaturan Zoom")]
-    public float kecepatanZoom = 10.0f;
-    public float jarakMinimal = 2.0f;
-    public float jarakMaksimal = 15.0f;
+    [Header("Zoom")]
+    public float kecepatanZoom = 10f;
+    public float jarakMinimal = 2f;
+    public float jarakMaksimal = 15f;
 
-    private float rotasiX = 20.0f;
-    private float rotasiY = 0.0f;
+    private float rotasiX = 20f;
+    private float rotasiY;
 
-    void Start()
-    {
-        // Set rotasi awal saat game dimulai (jika target sudah ada)
-        if (currentTarget != null)
-        {
-            rotasiY = currentTarget.eulerAngles.y;
-        }
-    }
+    void Start() { if (currentTarget != null) rotasiY = currentTarget.eulerAngles.y; }
 
     void LateUpdate()
     {
-        // Jika tidak ada target (player belum spawn), jangan lakukan apa-apa
-        if (!currentTarget) return; 
+        if (!currentTarget) return;
 
-        // Hanya proses input mouse jika 'isControlActive' true
         if (isControlActive)
         {
-            // Input Zoom (Scroll Wheel)
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             jarak = Mathf.Clamp(jarak - scroll * kecepatanZoom, jarakMinimal, jarakMaksimal);
 
-            // Input Rotasi (Mouse Kanan)
-            if (Input.GetMouseButton(1)) // 1 = Tombol mouse kanan
+            if (Input.GetMouseButton(1))
             {
                 rotasiY += Input.GetAxis("Mouse X") * kecepatanPutar;
                 rotasiX -= Input.GetAxis("Mouse Y") * kecepatanPutar;
@@ -52,13 +38,8 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        // Hitung rotasi dan posisi kamera
         Quaternion rotasi = Quaternion.Euler(rotasiX, rotasiY, 0);
-        Vector3 posisiTarget = currentTarget.position;
-        Vector3 posisiKamera = rotasi * new Vector3(0.0f, 0.0f, -jarak) + posisiTarget;
-
-        // Terapkan rotasi dan posisi ke kamera
         transform.rotation = rotasi;
-        transform.position = posisiKamera;
+        transform.position = rotasi * new Vector3(0, 0, -jarak) + currentTarget.position;
     }
 }

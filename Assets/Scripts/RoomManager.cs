@@ -8,11 +8,10 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
-    [Header("UI References")]
     public TMP_Text roomNameText;
     public TMP_Text player1Text;
     public TMP_Text player2Text;
-    public Button startGameButton; 
+    public Button startGameButton;
     public Button leaveRoomButton;
 
     void Start()
@@ -26,7 +25,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
     void UpdatePlayerListAndUI()
     {
         startGameButton.gameObject.SetActive(PhotonNetwork.IsMasterClient);
-        player1Text.text = PhotonNetwork.PlayerList.Length > 0 ? "Pemain 1: " + PhotonNetwork.PlayerList[0].NickName : "Pemain 1: (Kosong)";
+        player1Text.text = PhotonNetwork.PlayerList.Length > 0 
+            ? "Pemain 1: " + PhotonNetwork.PlayerList[0].NickName 
+            : "Pemain 1: (Kosong)";
 
         if (PhotonNetwork.PlayerList.Length > 1)
         {
@@ -58,13 +59,11 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (leaveRoomButton != null) leaveRoomButton.interactable = true;
         SceneManager.LoadScene(SceneNames.Lobby);
     }
-    
+
     public override void OnRoomPropertiesUpdate(Hashtable changedProps)
     {
         if (!PhotonNetwork.IsMasterClient && changedProps.TryGetValue("Reloading", out object r) && r is bool b && b)
-        {
             if (SceneManager.GetActiveScene().name != SceneNames.Room)
                 SceneManager.LoadScene(SceneNames.Room);
-        }
     }
 }

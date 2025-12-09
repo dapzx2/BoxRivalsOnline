@@ -4,7 +4,6 @@ using Photon.Pun;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerJumpController : MonoBehaviourPun
 {
-    [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 12f;
     [SerializeField] private float fallGravityMultiplier = 2.5f;
 
@@ -21,7 +20,6 @@ public class PlayerJumpController : MonoBehaviourPun
     void Update()
     {
         if (!photonView.IsMine) return;
-        
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !hasJumped)
         {
             rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);
@@ -32,33 +30,26 @@ public class PlayerJumpController : MonoBehaviourPun
 
     void FixedUpdate()
     {
-        // Natural gravity with faster fall
         if (rb.velocity.y < 0)
-        {
             rb.velocity += Vector3.up * Physics.gravity.y * (fallGravityMultiplier - 1) * Time.fixedDeltaTime;
-        }
     }
 
-    private void OnCollisionEnter(Collision collision) => CheckGround(collision);
-    private void OnCollisionStay(Collision collision) => CheckGround(collision);
-    private void OnCollisionExit(Collision collision)
-    {
-        if (IsGround(collision)) isGrounded = false;
-    }
+    void OnCollisionEnter(Collision c) => CheckGround(c);
+    void OnCollisionStay(Collision c) => CheckGround(c);
+    void OnCollisionExit(Collision c) { if (IsGround(c)) isGrounded = false; }
 
-    private void CheckGround(Collision collision)
+    void CheckGround(Collision c)
     {
-        if (rb == null) return;
-        if (IsGround(collision) && rb.velocity.y <= 0.5f)
+        if (rb != null && IsGround(c) && rb.velocity.y <= 0.5f)
         {
             isGrounded = true;
             hasJumped = false;
         }
     }
 
-    private bool IsGround(Collision collision)
+    bool IsGround(Collision c)
     {
-        foreach (ContactPoint contact in collision.contacts)
+        foreach (ContactPoint contact in c.contacts)
             if (contact.normal.y > 0.5f) return true;
         return false;
     }

@@ -12,25 +12,24 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
     public Button level3Button;
     public Button backToLobbyButton;
     public TextMeshProUGUI teksMenungguHost;
-    
-    private int levelToLoad = 0;
+
+    private int levelToLoad;
 
     void Start()
     {
-        if (PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom != null &&
-            PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("IsRestart", out object r) && r is bool b && b)
+        if (PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom?.CustomProperties.TryGetValue("IsRestart", out object r) == true && r is bool b && b)
         {
             StartCoroutine(AutoRestartGame());
             return;
         }
-        
+
         if (!PhotonNetwork.IsMasterClient)
         {
             if (level1Button != null) level1Button.interactable = false;
             if (level2Button != null) level2Button.interactable = false;
             if (level3Button != null) level3Button.interactable = false;
             if (backToLobbyButton != null) backToLobbyButton.interactable = false;
-            
+
             if (teksMenungguHost != null)
             {
                 teksMenungguHost.gameObject.SetActive(true);
@@ -39,24 +38,22 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
             }
             return;
         }
-        
+
         if (teksMenungguHost != null) teksMenungguHost.gameObject.SetActive(false);
-        
+
         level1Button.onClick.AddListener(() => PrepareLoad(1));
         level2Button.onClick.AddListener(() => PrepareLoad(2));
         level3Button.onClick.AddListener(() => PrepareLoad(3));
         if (backToLobbyButton != null) backToLobbyButton.onClick.AddListener(BackToLobby);
     }
-    
-    private System.Collections.IEnumerator AutoRestartGame()
+
+    System.Collections.IEnumerator AutoRestartGame()
     {
         yield return new WaitForSeconds(0.3f);
-        
+
         if (PhotonNetwork.IsMasterClient)
         {
-            int level = 2;
-            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("RestartToLevel", out object lvl)) level = (int)lvl;
-            
+            int level = PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("RestartToLevel", out object lvl) ? (int)lvl : 2;
             PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "IsRestart", false } });
             levelToLoad = level;
             PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "SelectedLevel", level } });
@@ -68,7 +65,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient) return;
         levelToLoad = index;
         PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "SelectedLevel", levelToLoad }, { "Reloading", false } });
-        
+
         level1Button.interactable = false;
         level2Button.interactable = false;
         level3Button.interactable = false;
@@ -77,7 +74,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
     public override void OnRoomPropertiesUpdate(Hashtable changedProps)
     {
         if (!PhotonNetwork.IsMasterClient) return;
-        
+
         if (changedProps.TryGetValue("SelectedLevel", out object lvl) && (int)lvl == levelToLoad)
         {
             if (PhotonNetwork.InRoom)

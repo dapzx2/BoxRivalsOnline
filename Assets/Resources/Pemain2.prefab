@@ -13,13 +13,13 @@ GameObject:
   - component: {fileID: 7495248099656895680}
   - component: {fileID: 144217720803079514}
   - component: {fileID: -6463320154132556370}
-  - component: {fileID: -8652079238168551269}
   - component: {fileID: 645770403997208827}
   - component: {fileID: -3283624939147102406}
   - component: {fileID: 6733601882273502441}
+  - component: {fileID: -4338225312509976956}
   m_Layer: 0
   m_Name: Pemain2
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -125,26 +125,10 @@ MonoBehaviour:
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
-  - {fileID: -8652079238168551269}
+  - {fileID: -4338225312509976956}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
---- !u!114 &-8652079238168551269
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1351872011898716859}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SynchronizePosition: 1
-  m_SynchronizeRotation: 1
-  m_SynchronizeScale: 0
-  m_UseLocal: 1
 --- !u!54 &645770403997208827
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -207,3 +191,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   jumpForce: 8
   fallGravityMultiplier: 2.5
+--- !u!114 &-4338225312509976956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351872011898716859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c92980c19b2a3af43929e8b19bc4d956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  positionLerpSpeed: 10
+  rotationLerpSpeed: 15

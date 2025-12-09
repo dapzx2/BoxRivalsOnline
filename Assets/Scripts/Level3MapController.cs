@@ -4,14 +4,9 @@ using System.Collections.Generic;
 
 public class Level3MapController : MonoBehaviourPun
 {
-    [Header("Map Info")]
     [SerializeField] private string mapName = "Unknown Map";
-    
-    [Header("Spawn Points")]
     [SerializeField] private Transform[] playerSpawnPoints;
     [SerializeField] private Transform[] boxSpawnPoints;
-
-    [Header("Respawn")]
     [SerializeField] private Transform respawnPoint;
 
     public Vector3 GetPlayerSpawnPosition(bool isMasterClient)

@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
-using Photon.Realtime;
 using System.Collections.Generic;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
@@ -9,17 +8,13 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 public class GameManager : MonoBehaviourPunCallbacks
 {
     public static GameManager Instance { get; private set; }
-
-    [Header("Player")]
     public GameObject playerPrefab;
     public GameObject playerPrefabClient;
-    
-    [Header("Referensi Level")]
     public float openAreaSize = 40f;
 
     private int currentLevelIndex = 1;
     private PhotonView pv;
-    private bool isGameOver = false;
+    private bool isGameOver;
     private BoxSpawner boxSpawner;
     private MazeGenerator mazeGenerator;
     private UIManager uiManager;
@@ -30,8 +25,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        pv = GetComponent<PhotonView>();
-        if (pv == null) pv = gameObject.AddComponent<PhotonView>();
+        pv = GetComponent<PhotonView>() ?? gameObject.AddComponent<PhotonView>();
         if (pv.ViewID == 1) { pv.ViewID = 0; pv.ViewID = 901; }
         PhotonNetwork.AutomaticallySyncScene = true;
     }
@@ -41,33 +35,31 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == SceneNames.GameArena || scene.name == SceneNames.Level2 || 
-            scene.name == SceneNames.Level3_SkyPlatforms || scene.name == SceneNames.Level3_ObstacleRush || 
-            scene.name == SceneNames.Level3_RampRace)
-        {
-            foreach (var mgr in FindObjectsOfType<GameManager>())
-                if (mgr != this) Destroy(mgr.gameObject);
+        if (scene.name != SceneNames.GameArena && scene.name != SceneNames.Level2 && 
+            scene.name != SceneNames.Level3_SkyPlatforms && scene.name != SceneNames.Level3_ObstacleRush && 
+            scene.name != SceneNames.Level3_RampRace) return;
 
-            boxSpawner = FindObjectOfType<BoxSpawner>();
-            mazeGenerator = FindObjectOfType<MazeGenerator>();
-            uiManager = FindObjectOfType<UIManager>();
+        foreach (var mgr in FindObjectsOfType<GameManager>())
+            if (mgr != this) Destroy(mgr.gameObject);
 
-            currentLevelIndex = 1;
-            if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("SelectedLevel", out object lvl))
-                currentLevelIndex = (int)lvl;
+        boxSpawner = FindObjectOfType<BoxSpawner>();
+        mazeGenerator = FindObjectOfType<MazeGenerator>();
+        uiManager = FindObjectOfType<UIManager>();
 
-            isGameOver = false;
-            if (pv.ViewID == 0 && PhotonNetwork.IsMasterClient) PhotonNetwork.AllocateViewID(pv);
-            InitializeGame();
-        }
+        currentLevelIndex = 1;
+        if (PhotonNetwork.CurrentRoom?.CustomProperties.TryGetValue("SelectedLevel", out object lvl) == true)
+            currentLevelIndex = (int)lvl;
+
+        isGameOver = false;
+        if (pv.ViewID == 0 && PhotonNetwork.IsMasterClient) PhotonNetwork.AllocateViewID(pv);
+        InitializeGame();
     }
 
-    private void InitializeGame()
+    void InitializeGame()
     {
         if (!PhotonNetwork.IsConnected) { SceneManager.LoadScene(SceneNames.Lobby); return; }
 
-        if (PhotonNetwork.LocalPlayer != null)
-            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "score", 0 } });
+        PhotonNetwork.LocalPlayer?.SetCustomProperties(new Hashtable { { "score", 0 } });
 
         if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom != null)
         {
@@ -82,13 +74,13 @@ public class GameManager : MonoBehaviourPunCallbacks
                     if (mazeGenerator != null)
                     {
                         mazeGenerator.GenerateAndBuildMaze();
-                        boxSpawner.SetBoxCounts(25, 5);
-                        boxSpawner.SpawnBoxesWithMinimumDistance(mazeGenerator.GetFloorPositions());
+                        boxSpawner?.SetBoxCounts(25, 5);
+                        boxSpawner?.SpawnBoxesWithMinimumDistance(mazeGenerator.GetFloorPositions());
                     }
                     else if (boxSpawner != null) { boxSpawner.SetBoxCounts(25, 5); boxSpawner.SpawnBoxesInOpenArea(openAreaSize, openAreaSize); }
                     break;
                 case 3:
-                    PhotonNetwork.LoadLevel(SceneNames.MapRoulette);
+                    if (boxSpawner != null) SpawnLevel3Boxes();
                     break;
                 default:
                     if (boxSpawner != null) { boxSpawner.SetBoxCounts(18, 2); boxSpawner.SpawnBoxesInOpenArea(openAreaSize, openAreaSize); }
@@ -97,7 +89,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
 
         if (HasLocalPlayer()) return;
-        
+
         switch (currentLevelIndex)
         {
             case 2:
@@ -105,8 +97,8 @@ public class GameManager : MonoBehaviourPunCallbacks
                 else SpawnPlayersDefault();
                 break;
             case 3:
-                Vector3 pos = PhotonNetwork.IsMasterClient ? new Vector3(0, 2, 0) : new Vector3(0, 10, 25);
-                PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? "Pemain1" : "Pemain2", pos, Quaternion.identity);
+                Vector3 spawnPos = PhotonNetwork.IsMasterClient ? new Vector3(-3, 2, 0) : new Vector3(3, 2, 0);
+                PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? "Pemain1" : "Pemain2", spawnPos, Quaternion.identity);
                 break;
             default:
                 SpawnPlayersDefault();
@@ -114,7 +106,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    private bool HasLocalPlayer()
+    bool HasLocalPlayer()
     {
         foreach (var player in FindObjectsOfType<PlayerController>())
             if (player.GetComponent<PhotonView>()?.IsMine == true) return true;
@@ -147,22 +139,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? "Pemain1" : "Pemain2", pos, Quaternion.identity);
     }
 
-    public void UpdateScore(int newScore)
-    {
-        if (PhotonNetwork.LocalPlayer != null)
-            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "score", newScore } });
-    }
+    public void UpdateScore(int newScore) => 
+        PhotonNetwork.LocalPlayer?.SetCustomProperties(new Hashtable { { "score", newScore } });
 
     public void EndGame()
     {
-        if (isGameOver) return;
-        if (PhotonNetwork.IsMasterClient)
-        {
-            isGameOver = true;
-            string msg = DetermineWinner();
-            if (pv != null && pv.IsMine) pv.RPC("RpcEndGame", RpcTarget.All, msg);
-            else RpcEndGame(msg);
-        }
+        if (isGameOver || !PhotonNetwork.IsMasterClient) return;
+        isGameOver = true;
+        string msg = DetermineWinner();
+        if (pv != null && pv.IsMine) pv.RPC(nameof(RpcEndGame), RpcTarget.All, msg);
+        else RpcEndGame(msg);
     }
 
     [PunRPC]
@@ -173,12 +159,37 @@ public class GameManager : MonoBehaviourPunCallbacks
         uiManager?.ShowGameOverScreen(message);
     }
 
-    private string DetermineWinner()
+    string DetermineWinner()
     {
         var players = PhotonNetwork.PlayerList;
         int GetScore(int i) => players.Length > i && players[i].CustomProperties.TryGetValue("score", out object s) ? (int)s : 0;
         int s1 = GetScore(0), s2 = GetScore(1);
         string winner = s1 > s2 ? $"{players[0].NickName} Menang!" : s2 > s1 ? $"{players[1].NickName} Menang!" : "Hasilnya Seri!";
         return $"{winner}\nSkor Akhir: {s1} - {s2}";
+    }
+
+    void SpawnLevel3Boxes()
+    {
+        if (!PhotonNetwork.IsMasterClient || boxSpawner == null) return;
+
+        Vector3[] boxPositions = {
+            new Vector3(0, 1.5f, 0), new Vector3(12, 2.5f, 0), new Vector3(20, 3.5f, 5),
+            new Vector3(28, 2.5f, -3), new Vector3(35, 4.5f, 2), new Vector3(42, 3.5f, -5),
+            new Vector3(50, 5.5f, 0), new Vector3(58, 4.5f, 3), new Vector3(65, 6.5f, 0),
+            new Vector3(75, 6.5f, 0)
+        };
+
+        boxSpawner.totalBoxCount = boxPositions.Length;
+        string prefabName = boxSpawner.boxPrefab != null ? boxSpawner.boxPrefab.name : "KotakKoleksi";
+        foreach (var pos in boxPositions)
+            PhotonNetwork.Instantiate(prefabName, pos, Quaternion.identity);
+    }
+
+    public void RespawnPlayer(GameObject player)
+    {
+        if (player == null) return;
+        player.transform.position = new Vector3(0, 3, 0);
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb != null) rb.velocity = Vector3.zero;
     }
 }
