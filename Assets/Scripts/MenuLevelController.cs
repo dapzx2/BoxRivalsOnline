@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using Photon.Pun;
 using Photon.Realtime;
 using ExitGames.Client.Photon; 
@@ -11,6 +12,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
     public Button level2Button;
     public Button level3Button;
     public Button backToLobbyButton; 
+    public TextMeshProUGUI teksMenungguHost;
     
     private int levelToLoad = 0; 
 
@@ -22,13 +24,32 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
             if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("IsRestart", out object isRestart) 
                 && isRestart is bool && (bool)isRestart)
             {
-                Debug.Log("MenuLevelController: Auto-restart detected!");
                 StartCoroutine(AutoRestartGame());
-                return; // Skip normal button setup
+                return;
             }
         }
         
-        // Normal flow - setup level buttons
+        // Client: Tampilkan tombol tapi disable (tidak bisa diklik)
+        if (!PhotonNetwork.IsMasterClient)
+        {
+            if (level1Button != null) level1Button.interactable = false;
+            if (level2Button != null) level2Button.interactable = false;
+            if (level3Button != null) level3Button.interactable = false;
+            if (backToLobbyButton != null) backToLobbyButton.interactable = false;
+            
+            if (teksMenungguHost != null)
+            {
+                teksMenungguHost.gameObject.SetActive(true);
+                string hostName = PhotonNetwork.MasterClient != null ? PhotonNetwork.MasterClient.NickName : "Host";
+                teksMenungguHost.text = "<i>Sedang menunggu " + hostName + " memilih level...</i>";
+            }
+            return;
+        }
+        
+        // Host: Sembunyikan teks menunggu
+        if (teksMenungguHost != null) teksMenungguHost.gameObject.SetActive(false);
+        
+        // Normal flow - setup level buttons (Host only)
         level1Button.onClick.AddListener(() => PrepareLoad(1));
         level2Button.onClick.AddListener(() => PrepareLoad(2));
         level3Button.onClick.AddListener(() => PrepareLoad(3));
@@ -69,8 +90,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient) return;
         
-        levelToLoad = index; // Simpan level yang diinginkan
-        Debug.Log("Host menyiapkan level: " + index);
+        levelToLoad = index;
 
         // 1. Set properti yang akan disimpan
         ExitGames.Client.Photon.Hashtable roomProperties = new ExitGames.Client.Photon.Hashtable();
@@ -95,8 +115,6 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
         // Cek apakah properti SelectedLevel sudah di-update di sisi Host
         if (changedProps.ContainsKey("SelectedLevel") && (int)changedProps["SelectedLevel"] == levelToLoad)
         {
-            // HANYA jika level yang disimpan SAMA dengan level yang kita inginkan
-            Debug.Log("Host MENDAPAT KONFIRMASI LEVEL " + levelToLoad + ". Memuat Arena.");
             
             // Tutup Room
             if(PhotonNetwork.InRoom) {
@@ -123,13 +141,12 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
 
     void BackToLobby()
     {
-        Debug.Log("Host kembali ke Lobby dari MenuLevel, meninggalkan room.");
-        
-        if (PhotonNetwork.InRoom)
+        // Pastikan masih terkoneksi sebelum meninggalkan room
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            PhotonNetwork.LeaveRoom(); 
+            PhotonNetwork.LeaveRoom();
         }
         
-        SceneManager.LoadScene(SceneNames.Lobby); 
+        SceneManager.LoadScene(SceneNames.Lobby);
     }
 }

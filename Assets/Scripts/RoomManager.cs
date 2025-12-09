@@ -30,21 +30,22 @@ public class RoomManager : MonoBehaviourPunCallbacks
         startGameButton.gameObject.SetActive(PhotonNetwork.IsMasterClient);
 
         if (PhotonNetwork.PlayerList.Length > 0)
-            player1Text.text = "Player 1: " + PhotonNetwork.PlayerList[0].NickName;
+            player1Text.text = "Pemain 1: " + PhotonNetwork.PlayerList[0].NickName;
         else
-            player1Text.text = "Player 1: (Kosong)";
+            player1Text.text = "Pemain 1: (Kosong)";
 
         if (PhotonNetwork.PlayerList.Length > 1)
         {
-            player2Text.text = "Player 2: " + PhotonNetwork.PlayerList[1].NickName;
+            player2Text.text = "Pemain 2: " + PhotonNetwork.PlayerList[1].NickName;
             if (!PhotonNetwork.IsMasterClient)
             {
-                player2Text.text += "\n(Menunggu Host memilih...)";
+                string hostName = PhotonNetwork.MasterClient != null ? PhotonNetwork.MasterClient.NickName : "Host";
+                player2Text.text += "\n<i>Sedang menunggu " + hostName + " memilih...</i>";
             }
         }
         else
         {
-            player2Text.text = "Player 2: (Mencari...)";
+            player2Text.text = "Pemain 2: <i>Sedang Menunggu...</i>";
         }
     }
 

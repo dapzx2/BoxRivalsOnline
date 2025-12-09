@@ -80,11 +80,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     // --- CALLBACKS PHOTON ---
     public override void OnConnectedToMaster()
     {
-        Debug.Log("Berhasil terhubung ke Master!");
-        
-        // BARIS KUNCI: Aktifkan sinkronisasi scene otomatis
         PhotonNetwork.AutomaticallySyncScene = true; 
-        
         PhotonNetwork.JoinLobby(); 
     }
 

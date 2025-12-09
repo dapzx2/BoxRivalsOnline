@@ -41,16 +41,14 @@ public class BoxSpawner : MonoBehaviourPun
     {
         jumlahKotakBiasa = biasa;
         jumlahKotakBonus = bonus;
-        totalBoxCount = biasa + bonus; // Set total box count
-        boxesCollectedCount = 0; // RESET COUNTER HERE
-        Debug.Log("BoxSpawner: SetBoxCounts called. Total boxes: " + totalBoxCount);
+        totalBoxCount = biasa + bonus;
+        boxesCollectedCount = 0;
     }
 
     public void SpawnForVaultLevel(Collider platformCollider, float openAreaSize)
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            Debug.Log("BoxSpawner: SpawnForVaultLevel called by MasterClient.");
             totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
             Bounds platformBounds = platformCollider.bounds;
             float padding = 3.0f;
@@ -102,7 +100,6 @@ public class BoxSpawner : MonoBehaviourPun
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            Debug.Log("BoxSpawner: SpawnBoxesInMaze called by MasterClient.");
             totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
             List<Vector3> validWorldPositions = new List<Vector3>();
             foreach (var gridPos in floorPositions)
@@ -117,7 +114,6 @@ public class BoxSpawner : MonoBehaviourPun
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            Debug.Log("BoxSpawner: SpawnBoxesInOpenArea called by MasterClient.");
             totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
             List<Vector3> validWorldPositions = new List<Vector3>();
             int gridWidth = Mathf.FloorToInt(areaX / minDistance);
@@ -136,7 +132,6 @@ public class BoxSpawner : MonoBehaviourPun
     
     public void SpawnBoxesWithMinimumDistance(List<Vector3> validPositions)
     {
-        Debug.Log("BoxSpawner: SpawnBoxesWithMinimumDistance called.");
         List<Vector3> shuffledPositions = validPositions.OrderBy(a => Random.value).ToList();
         int totalBoxesToSpawn = jumlahKotakBiasa + jumlahKotakBonus;
         int spawnedCount = 0;

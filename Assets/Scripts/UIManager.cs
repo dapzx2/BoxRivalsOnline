@@ -13,7 +13,6 @@ public class UIManager : MonoBehaviourPunCallbacks
     public GameObject panelMisiBerhasil;
     public GameObject panelPause;
     public TextMeshProUGUI teksCeritaAwal;
-    public TextMeshProUGUI logPemain1Text;
     public TextMeshProUGUI teksSkorP1;
     public TextMeshProUGUI teksSkorP2;
     public TextMeshProUGUI teksWaktu;
@@ -24,8 +23,9 @@ public class UIManager : MonoBehaviourPunCallbacks
     public Button tombolLanjutkan;
     public Button tombolKembaliKeMenu;
     
-    [Header("Tombol Game Over")]
-    public Button tombolMainLagi;
+    [Header("Game Over")]
+    public TextMeshProUGUI teksMenungguHost;
+    public Button tombolMenuGameOver;
 
     [Header("Pengaturan Game")]
     public float waktuLevel = 60f;
@@ -42,20 +42,10 @@ public class UIManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        // Setup UI dan Timer
+        // Setup UI
         if (panelCeritaAwal != null) panelCeritaAwal.SetActive(false);
-        if (panelMisiBerhasil != null) panelMisiBerhasil.SetActive(false); // Sembunyikan Game Over
-        if (panelPause != null) panelPause.SetActive(false); // Sembunyikan Pause
-
-        if (tombolMainLagi != null)
-        {
-            tombolMainLagi.onClick.RemoveAllListeners();
-            tombolMainLagi.onClick.AddListener(MainLagi);
-        }
-        else
-        {
-            Debug.LogWarning("UIManager: Tombol Main Lagi belum di-assign di Inspector!");
-        }
+        if (panelMisiBerhasil != null) panelMisiBerhasil.SetActive(false);
+        if (panelPause != null) panelPause.SetActive(false);
 
         TampilkanCeritaAwal();
     }
@@ -63,7 +53,8 @@ public class UIManager : MonoBehaviourPunCallbacks
     // --- UPDATE & TIMER ---
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // Hanya Host yang bisa pause
+        if (Input.GetKeyDown(KeyCode.Escape) && PhotonNetwork.IsMasterClient)
         {
             TogglePauseMenu();
         }
@@ -74,7 +65,7 @@ public class UIManager : MonoBehaviourPunCallbacks
 
         if (teksWaktu != null)
         {
-            teksWaktu.text = "Waktu: " + Mathf.Max(0, Mathf.CeilToInt((float)sisaWaktu)).ToString();
+            teksWaktu.text = "Sisa Waktu: " + Mathf.Max(0, Mathf.CeilToInt((float)sisaWaktu)).ToString() + " detik";
         }
 
         if (sisaWaktu <= 0)
@@ -111,16 +102,12 @@ public class UIManager : MonoBehaviourPunCallbacks
         if (isReturningToMenu) return;
         isReturningToMenu = true;
 
-        // Stop the game logic to prevent further updates
         gameBerjalan = false;
 
         if (PhotonNetwork.IsMasterClient)
         {
-            if (PhotonNetwork.InRoom)
+            if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
             {
-                Debug.Log("Host membatalkan game. Memberi tanda Reloading dan kembali ke MenuLevel.");
-                
-                // This property can signal other clients that the host is reloading the level.
                 ExitGames.Client.Photon.Hashtable props = new ExitGames.Client.Photon.Hashtable();
                 props.Add("Reloading", true);
                 PhotonNetwork.CurrentRoom.SetCustomProperties(props);
@@ -194,9 +181,9 @@ public class UIManager : MonoBehaviourPunCallbacks
             {
                 score1 = (int)scoreObject1;
             }
-            teksSkorP1.text = player1.NickName + ": " + score1;
+            if (teksSkorP1 != null) teksSkorP1.text = "Skor " + player1.NickName + ": " + score1;
         }
-        else { teksSkorP1.text = "Player 1: 0"; }
+        else { if (teksSkorP1 != null) teksSkorP1.text = "Skor Pemain 1: 0"; }
 
         if (players.Length > 1)
         {
@@ -206,9 +193,9 @@ public class UIManager : MonoBehaviourPunCallbacks
             {
                 score2 = (int)scoreObject2;
             }
-            teksSkorP2.text = player2.NickName + ": " + score2;
+            if (teksSkorP2 != null) teksSkorP2.text = "Skor " + player2.NickName + ": " + score2;
         }
-        else { teksSkorP2.text = "Player 2: (Mencari...)"; }
+        else { if (teksSkorP2 != null) teksSkorP2.text = "<i>Pemain 2: Sedang Menunggu...</i>"; }
     }
 
     void AkhiriGame(string customMessage = null)
@@ -229,19 +216,54 @@ public class UIManager : MonoBehaviourPunCallbacks
         {
             panelMisiBerhasil.SetActive(true);
             if (teksPemenang != null) teksPemenang.text = message;
+            
+            // Tombol Menu hanya untuk Host
+            if (tombolMenuGameOver != null)
+            {
+                tombolMenuGameOver.gameObject.SetActive(PhotonNetwork.IsMasterClient);
+            }
+            
+            // Tampilkan teks menunggu untuk Client
+            if (teksMenungguHost != null)
+            {
+                teksMenungguHost.gameObject.SetActive(!PhotonNetwork.IsMasterClient);
+                string hostName = PhotonNetwork.MasterClient != null ? PhotonNetwork.MasterClient.NickName : "Host";
+                teksMenungguHost.text = "<i>Sedang menunggu " + hostName + " memilih...</i>";
+            }
         }
     }
 
     void TampilkanCeritaAwal()
     {
-        if (panelCeritaAwal != null) panelCeritaAwal.SetActive(true); // MUNCULKAN PANEL CERITA
+        if (panelCeritaAwal != null) panelCeritaAwal.SetActive(true);
+
+        // Client: Sembunyikan tombol Mulai, tampilkan teks menunggu
+        if (tombolMulai != null)
+        {
+            tombolMulai.gameObject.SetActive(PhotonNetwork.IsMasterClient);
+        }
+        
+        // Tampilkan teks menunggu untuk client di panel cerita awal
+        if (teksMenungguHost != null)
+        {
+            teksMenungguHost.gameObject.SetActive(!PhotonNetwork.IsMasterClient);
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                string hostName = PhotonNetwork.MasterClient != null ? PhotonNetwork.MasterClient.NickName : "Host";
+                teksMenungguHost.text = "<i>Sedang menunggu " + hostName + " memilih...</i>";
+            }
+        }
 
         int level = 1;
         if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("SelectedLevel")) 
             level = (int)PhotonNetwork.CurrentRoom.CustomProperties["SelectedLevel"];
-        if (level == 1) teksCeritaAwal.text = "Selamat datang di Arena Latihan! Kumpulkan semua kotak untuk membuktikan kecepatanmu!";
-        else if (level == 2) teksCeritaAwal.text = "Labirin Menanti! Kecepatan saja tidak cukup, tunjukkan kelihaianmu menemukan jalan!";
-        else if (level == 3) teksCeritaAwal.text = "The Vault! Rebut kotak bonus di tengah arena untuk meraih kemenangan!";
+        
+        if (teksCeritaAwal != null)
+        {
+            if (level == 1) teksCeritaAwal.text = "Selamat datang di Arena Latihan! Kumpulkan semua kotak untuk membuktikan kecepatanmu!";
+            else if (level == 2) teksCeritaAwal.text = "Labirin Menanti! Kecepatan saja tidak cukup, tunjukkan kelihaianmu menemukan jalan!";
+            else if (level == 3) teksCeritaAwal.text = "The Vault! Rebut kotak bonus di tengah arena untuk meraih kemenangan!";
+        }
     }
 
     // --- TIMER SYNC IMPLEMENTATION ---
@@ -278,47 +300,5 @@ public class UIManager : MonoBehaviourPunCallbacks
         {
             Debug.LogWarning("UIManager: Only Master Client can start the game.");
         }
-    }
-
-    private bool isRestarting = false;
-    
-    public void MainLagi()
-    {
-        Debug.Log("UIManager: Tombol Main Lagi ditekan!");
-
-        if (isRestarting)
-        {
-            Debug.LogWarning("UIManager: Restart already in progress, ignoring...");
-            return;
-        }
-
-        if (PhotonNetwork.IsMasterClient)
-        {
-            isRestarting = true;
-            
-            int currentLevel = 1;
-            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("SelectedLevel", out object lvl))
-                currentLevel = (int)lvl;
-            
-            Debug.Log($"UIManager: Restarting to level {currentLevel} via MenuLevel...");
-            
-            ExitGames.Client.Photon.Hashtable props = new ExitGames.Client.Photon.Hashtable
-            {
-                { "RestartToLevel", currentLevel },
-                { "IsRestart", true }
-            };
-            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
-            
-            PhotonNetwork.LoadLevel(SceneNames.MenuLevel);
-        }
-        else
-        {
-            Debug.LogWarning("UIManager: Anda bukan MasterClient, tidak bisa restart level.");
-        }
-    }
-
-    public void UpdateLogP1(string input)
-    {
-        if (logPemain1Text != null) logPemain1Text.text = "Anda: " + input;
     }
 }

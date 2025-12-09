@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/// <summary>
+/// Manager untuk mengaktifkan kamera berdasarkan klik mouse
+/// Untuk multiplayer online, setiap client hanya punya 1 kamera aktif
+/// </summary>
 public class CameraActivationManager : MonoBehaviour
 {
     public CameraController camera1Controller;
@@ -9,16 +13,14 @@ public class CameraActivationManager : MonoBehaviour
 
     void Start()
     {
-        // Pastikan UIManager sudah di-assign di Inspector
-        if (uiManager == null)
+        // Default: aktifkan kamera 1
+        if (camera1Controller != null)
         {
-            Debug.LogError("UIManager belum di-assign di Inspector untuk CameraActivationManager!");
+            camera1Controller.isControlActive = true;
         }
-        
-        // Tetap atur default di sini untuk awal
-        if (camera1Controller != null && camera2Controller != null)
+        if (camera2Controller != null)
         {
-            SwitchToCamera1();
+            camera2Controller.isControlActive = false;
         }
     }
 
@@ -26,51 +28,27 @@ public class CameraActivationManager : MonoBehaviour
     {
         if (camera1Controller == null || camera2Controller == null) return;
 
-        // Cek klik mouse
+        // Switch kamera berdasarkan klik mouse (kiri/kanan layar)
         if (Input.GetMouseButtonDown(0))
         {
-            // Pastikan game tidak sedang dijeda oleh panel cerita awal
-            if (uiManager != null && uiManager.panelCeritaAwal.activeInHierarchy)
+            if (uiManager != null && uiManager.panelCeritaAwal != null && uiManager.panelCeritaAwal.activeInHierarchy)
             {
-                return; // Jangan lakukan apa-apa jika panel cerita masih aktif
+                return;
             }
 
             float mouseXPosition = Input.mousePosition.x;
             float screenHalfWidth = Screen.width / 2f;
 
-            if (mouseXPosition < screenHalfWidth) { SwitchToCamera1(); }
-            else { SwitchToCamera2(); }
-        }
-
-        // Cek input keyboard
-        if (camera1Controller.isControlActive)
-        {
-            if (Input.GetKeyDown(KeyCode.I) || Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.K) || Input.GetKeyDown(KeyCode.L))
+            if (mouseXPosition < screenHalfWidth)
             {
-                SwitchToCamera2();
+                camera1Controller.isControlActive = true;
+                camera2Controller.isControlActive = false;
+            }
+            else
+            {
+                camera1Controller.isControlActive = false;
+                camera2Controller.isControlActive = true;
             }
         }
-        else if (camera2Controller.isControlActive)
-        {
-            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.D))
-            {
-                SwitchToCamera1();
-            }
-        }
-    }
-
-    // --- FUNGSI INI AKAN KITA BUAT PUBLIK AGAR BISA DIPANGGIL DARI LUAR ---
-    public void SwitchToCamera1()
-    {
-        if (camera1Controller == null || camera2Controller == null) return;
-        camera1Controller.isControlActive = true;
-        camera2Controller.isControlActive = false;
-    }
-
-    public void SwitchToCamera2()
-    {
-        if (camera1Controller == null || camera2Controller == null) return;
-        camera1Controller.isControlActive = false;
-        camera2Controller.isControlActive = true;
     }
 }

@@ -1,53 +1,31 @@
 using UnityEngine;
 using Photon.Pun;
-using Photon.Realtime;
-using System.Linq; 
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Pengaturan Gerak")]
-    public float kecepatan = 3f; // SLOWER: 70% reduction for precise control!
+    public float kecepatan = 3f;
     public float kekuatanRem = 0.95f;
 
     private Rigidbody rb;
     private Vector2 inputGerakan;
     private Transform kamera;
-    private UIManager uiManager;
     private PhotonView photonView;
-    private PhotonView boxSpawnerView; // Untuk mengirim RPC ke BoxSpawner
-    
-    private bool isPlayerTwo = false; 
-    private string lastPressedKeys = "";
+    private PhotonView boxSpawnerView;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        photonView = GetComponent<PhotonView>(); // Ensure this is initialized!
+        photonView = GetComponent<PhotonView>();
 
         if (photonView != null && photonView.IsMine)
         {
-            // Tentukan apakah Player ini adalah Player 2 (untuk input IJKL)
-            Player localPlayer = PhotonNetwork.LocalPlayer;
-            Player[] players = PhotonNetwork.PlayerList.OrderBy(p => p.ActorNumber).ToArray();
-            
-            if (players.Length > 1 && localPlayer.ActorNumber == players[1].ActorNumber)
-            {
-                isPlayerTwo = true;
-            }
-
-            // Inisialisasi komponen lain (Kamera & UI)
             kamera = Camera.main.transform; 
-            uiManager = FindObjectOfType<UIManager>();
             
-            // Ambil PhotonView dari BoxSpawner di scene
             BoxSpawner spawner = FindObjectOfType<BoxSpawner>();
             if (spawner != null)
             {
                  boxSpawnerView = spawner.GetComponent<PhotonView>();
-            }
-            else
-            {
-                Debug.LogWarning("PlayerController tidak dapat menemukan BoxSpawner di scene. RPC untuk menghancurkan kotak mungkin tidak akan berfungsi jika Anda adalah client.");
             }
 
             CameraController camScript = kamera.GetComponent<CameraController>();
@@ -57,7 +35,6 @@ public class PlayerController : MonoBehaviour
                 camScript.isControlActive = true; 
             }
 
-            // Reset score local
             GameManager.Instance.UpdateScore(0);
         }
     }
@@ -66,43 +43,13 @@ public class PlayerController : MonoBehaviour
     {
         if (photonView == null || !photonView.IsMine) return;
 
-        // --- Logika Input WASD vs IJKL ---
+        // Semua pemain gunakan WASD (setiap client punya window sendiri)
         inputGerakan = Vector2.zero;
         
-        if (isPlayerTwo)
-        {
-            if (Input.GetKey(KeyCode.I)) inputGerakan.y = 1f;
-            else if (Input.GetKey(KeyCode.K)) inputGerakan.y = -1f;
-            if (Input.GetKey(KeyCode.J)) inputGerakan.x = -1f;
-            else if (Input.GetKey(KeyCode.L)) inputGerakan.x = 1f;
-        }
-        else
-        {
-            if (Input.GetKey(KeyCode.W)) inputGerakan.y = 1f;
-            else if (Input.GetKey(KeyCode.S)) inputGerakan.y = -1f;
-            if (Input.GetKey(KeyCode.A)) inputGerakan.x = -1f;
-            else if (Input.GetKey(KeyCode.D)) inputGerakan.x = 1f;
-        }
-
-        // Logika UpdateLogP1
-        if (uiManager != null)
-        {
-            string pressedKeys = "";
-            if (Input.GetKey(KeyCode.W)) { pressedKeys += "W "; }
-            if (Input.GetKey(KeyCode.A)) { pressedKeys += "A "; }
-            if (Input.GetKey(KeyCode.S)) { pressedKeys += "S "; }
-            if (Input.GetKey(KeyCode.D)) { pressedKeys += "D "; }
-            if (Input.GetKey(KeyCode.I)) { pressedKeys += "I "; }
-            if (Input.GetKey(KeyCode.J)) { pressedKeys += "J "; }
-            if (Input.GetKey(KeyCode.K)) { pressedKeys += "K "; }
-            if (Input.GetKey(KeyCode.L)) { pressedKeys += "L "; }
-            
-            if (pressedKeys != lastPressedKeys)
-            {
-                uiManager.UpdateLogP1(string.IsNullOrEmpty(pressedKeys) ? "-" : pressedKeys);
-                lastPressedKeys = pressedKeys;
-            }
-        }
+        if (Input.GetKey(KeyCode.W)) inputGerakan.y = 1f;
+        else if (Input.GetKey(KeyCode.S)) inputGerakan.y = -1f;
+        if (Input.GetKey(KeyCode.A)) inputGerakan.x = -1f;
+        else if (Input.GetKey(KeyCode.D)) inputGerakan.x = 1f;
     }
 
     void FixedUpdate()

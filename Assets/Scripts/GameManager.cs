@@ -53,8 +53,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         // FIX: Avoid conflict with scene objects that use ViewID 1
         if (pv.ViewID == 1)
         {
-            Debug.Log("GameManager: Changing ViewID from 1 to 901 to prevent conflicts.");
-            // Must set to 0 first to release the ID, then assign new one
             pv.ViewID = 0;
             pv.ViewID = 901;
         }
@@ -77,7 +75,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"GameManager: OnSceneLoaded called for scene '{scene.name}' (IsMasterClient: {PhotonNetwork.IsMasterClient})");
         
         if (scene.name == SceneNames.GameArena || scene.name == SceneNames.Level2 || 
             scene.name == SceneNames.Level3_SkyPlatforms || scene.name == SceneNames.Level3_ObstacleRush || 
