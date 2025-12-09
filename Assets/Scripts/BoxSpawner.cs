@@ -8,32 +8,17 @@ public class BoxSpawner : MonoBehaviourPun
 {
     public GameObject boxPrefab;
     public GameObject boxBonusPrefab;
-
     public int jumlahKotakBiasa = 18;
     public int jumlahKotakBonus = 2;
     public float minDistance = 2.5f;
-
-    // Variabel untuk tracking kotak (NON-STATIC agar reset tiap level)
     public int totalBoxCount = 0;
     private int boxesCollectedCount = 0;
 
     System.Collections.IEnumerator Start()
     {
-        // Retry loop: Try to find GameManager for up to 3 seconds
         float timer = 0;
-        while (GameManager.Instance == null && timer < 3.0f)
-        {
-            timer += Time.deltaTime;
-            yield return null;
-        }
-
-        if (GameManager.Instance == null)
-        {
-            Debug.LogWarning("BoxSpawner: GameManager instance not found after waiting. Redirecting to Lobby...");
-            SceneManager.LoadScene(SceneNames.Lobby);
-        }
-        
-        // Pastikan counter di-reset saat mulai
+        while (GameManager.Instance == null && timer < 3.0f) { timer += Time.deltaTime; yield return null; }
+        if (GameManager.Instance == null) SceneManager.LoadScene(SceneNames.Lobby);
         boxesCollectedCount = 0;
     }
 
@@ -47,50 +32,40 @@ public class BoxSpawner : MonoBehaviourPun
 
     public void SpawnForVaultLevel(Collider platformCollider, float openAreaSize)
     {
-        if (PhotonNetwork.IsMasterClient)
+        if (!PhotonNetwork.IsMasterClient) return;
+        totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
+        Bounds bounds = platformCollider.bounds;
+        float padding = 3.0f;
+
+        for (int i = 0; i < jumlahKotakBonus; i++)
         {
-            totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
-            Bounds platformBounds = platformCollider.bounds;
-            float padding = 3.0f;
+            float x = Random.Range(bounds.center.x - bounds.extents.x + padding, bounds.center.x + bounds.extents.x - padding);
+            float z = Random.Range(bounds.center.z - bounds.extents.z + padding, bounds.center.z + bounds.extents.z - padding);
+            PhotonNetwork.Instantiate(boxBonusPrefab.name, new Vector3(x, bounds.max.y + 0.75f, z), Quaternion.identity);
+        }
 
-            for (int i = 0; i < jumlahKotakBonus; i++)
-            {
-                float randomX = Random.Range(platformBounds.center.x - platformBounds.extents.x + padding,
-                                               platformBounds.center.x + platformBounds.extents.x - padding);
-                float randomZ = Random.Range(platformBounds.center.z - platformBounds.extents.z + padding,
-                                               platformBounds.center.z + platformBounds.extents.z - padding);
-
-                Vector3 spawnPosition = new Vector3(randomX, platformBounds.max.y + 0.75f, randomZ);
-                PhotonNetwork.Instantiate(boxBonusPrefab.name, spawnPosition, Quaternion.identity);
-            }
-
-            List<Vector3> validPositions = GetValidOpenAreaPositions(openAreaSize, openAreaSize, platformBounds);
-            List<Vector3> shuffledPositions = validPositions.OrderBy(a => Random.value).ToList();
-
-            int spawnCount = Mathf.Min(jumlahKotakBiasa, shuffledPositions.Count);
-            for (int i = 0; i < spawnCount; i++)
-            {
-                Vector3 spawnPosition = shuffledPositions[i];
-                spawnPosition.y = 0.5f;
-                PhotonNetwork.Instantiate(boxPrefab.name, spawnPosition, Quaternion.identity);
-            }
+        var positions = GetValidOpenAreaPositions(openAreaSize, openAreaSize, bounds).OrderBy(a => Random.value).ToList();
+        int count = Mathf.Min(jumlahKotakBiasa, positions.Count);
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 pos = positions[i]; pos.y = 0.5f;
+            PhotonNetwork.Instantiate(boxPrefab.name, pos, Quaternion.identity);
         }
     }
 
     private List<Vector3> GetValidOpenAreaPositions(float areaX, float areaZ, Bounds exclusionZone)
     {
         List<Vector3> validPositions = new List<Vector3>();
-        int gridWidth = Mathf.FloorToInt(areaX / minDistance);
-        int gridHeight = Mathf.FloorToInt(areaZ / minDistance);
+        int gridW = Mathf.FloorToInt(areaX / minDistance);
+        int gridH = Mathf.FloorToInt(areaZ / minDistance);
         exclusionZone.Expand(minDistance * 2);
-        for (int x = 0; x < gridWidth; x++) {
-            for (int z = 0; z < gridHeight; z++) {
-                float worldX = x * minDistance - (areaX / 2f);
-                float worldZ = z * minDistance - (areaZ / 2f);
-                Vector3 currentPos = new Vector3(worldX, 0, worldZ);
-                if (!exclusionZone.Contains(currentPos)) {
-                    validPositions.Add(currentPos);
-                }
+
+        for (int x = 0; x < gridW; x++)
+        {
+            for (int z = 0; z < gridH; z++)
+            {
+                Vector3 pos = new Vector3(x * minDistance - (areaX / 2f), 0, z * minDistance - (areaZ / 2f));
+                if (!exclusionZone.Contains(pos)) validPositions.Add(pos);
             }
         }
         return validPositions;
@@ -98,64 +73,43 @@ public class BoxSpawner : MonoBehaviourPun
 
     public void SpawnBoxesInMaze(List<Vector2Int> floorPositions, MazeGenerator mazeGen)
     {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
-            List<Vector3> validWorldPositions = new List<Vector3>();
-            foreach (var gridPos in floorPositions)
-            {
-                validWorldPositions.Add(mazeGen.GetWorldPosition(gridPos, 0f));
-            }
-            SpawnBoxesWithMinimumDistance(validWorldPositions);
-        }
+        if (!PhotonNetwork.IsMasterClient) return;
+        totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
+        SpawnBoxesWithMinimumDistance(floorPositions.Select(p => mazeGen.GetWorldPosition(p, 0f)).ToList());
     }
 
     public void SpawnBoxesInOpenArea(float areaX, float areaZ)
     {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
-            List<Vector3> validWorldPositions = new List<Vector3>();
-            int gridWidth = Mathf.FloorToInt(areaX / minDistance);
-            int gridHeight = Mathf.FloorToInt(areaZ / minDistance);
+        if (!PhotonNetwork.IsMasterClient) return;
+        totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
 
-            for (int x = 0; x < gridWidth; x++) {
-                for (int z = 0; z < gridHeight; z++) {
-                    float worldX = x * minDistance - (areaX / 2f) + (minDistance / 2f);
-                    float worldZ = z * minDistance - (areaZ / 2f) + (minDistance / 2f);
-                    validWorldPositions.Add(new Vector3(worldX, 0, worldZ));
-                }
-            }
-            SpawnBoxesWithMinimumDistance(validWorldPositions);
-        }
+        List<Vector3> positions = new List<Vector3>();
+        int gridW = Mathf.FloorToInt(areaX / minDistance);
+        int gridH = Mathf.FloorToInt(areaZ / minDistance);
+
+        for (int x = 0; x < gridW; x++)
+            for (int z = 0; z < gridH; z++)
+                positions.Add(new Vector3(x * minDistance - (areaX / 2f) + (minDistance / 2f), 0, z * minDistance - (areaZ / 2f) + (minDistance / 2f)));
+
+        SpawnBoxesWithMinimumDistance(positions);
     }
     
     public void SpawnBoxesWithMinimumDistance(List<Vector3> validPositions)
     {
-        List<Vector3> shuffledPositions = validPositions.OrderBy(a => Random.value).ToList();
-        int totalBoxesToSpawn = jumlahKotakBiasa + jumlahKotakBonus;
-        int spawnedCount = 0;
+        var positions = validPositions.OrderBy(a => Random.value).ToList();
+        int total = Mathf.Min(jumlahKotakBiasa + jumlahKotakBonus, positions.Count);
+        int spawned = 0;
 
-        if (shuffledPositions.Count < totalBoxesToSpawn) {
-            totalBoxesToSpawn = shuffledPositions.Count;
+        for (int i = 0; i < jumlahKotakBonus && spawned < total; i++, spawned++)
+        {
+            Vector3 pos = positions[spawned]; pos.y = 0.75f;
+            PhotonNetwork.Instantiate(boxBonusPrefab.name, pos, Quaternion.identity);
         }
 
-        // Spawn Bonus Box
-        for (int i = 0; i < jumlahKotakBonus && spawnedCount < totalBoxesToSpawn; i++)
+        for (int i = 0; i < jumlahKotakBiasa && spawned < total; i++, spawned++)
         {
-            Vector3 spawnPosition = shuffledPositions[spawnedCount];
-            spawnPosition.y = 0.75f;
-            PhotonNetwork.Instantiate(boxBonusPrefab.name, spawnPosition, Quaternion.identity);
-            spawnedCount++;
-        }
-
-        // Spawn Box Biasa
-        for (int i = 0; i < jumlahKotakBiasa && spawnedCount < totalBoxesToSpawn; i++)
-        {
-            Vector3 spawnPosition = shuffledPositions[spawnedCount];
-            spawnPosition.y = 0.5f;
-            PhotonNetwork.Instantiate(boxPrefab.name, spawnPosition, Quaternion.identity);
-            spawnedCount++;
+            Vector3 pos = positions[spawned]; pos.y = 0.5f;
+            PhotonNetwork.Instantiate(boxPrefab.name, pos, Quaternion.identity);
         }
     }
 
@@ -163,28 +117,12 @@ public class BoxSpawner : MonoBehaviourPun
     public void RpcDestroyBox(int viewID)
     {
         if (!PhotonNetwork.IsMasterClient) return;
-
         PhotonView targetView = PhotonView.Find(viewID);
-
         if (targetView != null)
         {
             PhotonNetwork.Destroy(targetView.gameObject);
             boxesCollectedCount++;
-            Debug.Log("BoxSpawner: Box collected. Collected: " + boxesCollectedCount + " / " + totalBoxCount);
-
-            // Cek jika semua kotak sudah terkumpul
-            if (boxesCollectedCount >= totalBoxCount)
-            {
-                Debug.Log("BoxSpawner: All boxes collected!");
-                if (GameManager.Instance != null)
-                {
-                    GameManager.Instance.EndGame();
-                }
-                else
-                {
-                    Debug.LogWarning("BoxSpawner: GameManager not found. Cannot call EndGame().");
-                }
-            }
+            if (boxesCollectedCount >= totalBoxCount) GameManager.Instance?.EndGame();
         }
     }
 }

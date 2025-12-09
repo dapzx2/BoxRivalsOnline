@@ -1,10 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Photon.Pun;
-using Photon.Realtime;
 
 public class LobbyManager : MonoBehaviourPunCallbacks
 {
@@ -19,15 +16,8 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         DisableUI();
         statusText.text = "Menghubungkan ke server...";
         
-        if (!PhotonNetwork.IsConnected)
-        {
-            PhotonNetwork.ConnectUsingSettings();
-        }
-        else
-        {
-            statusText.text = "Sudah terhubung.";
-            OnConnectedToMaster();
-        }
+        if (!PhotonNetwork.IsConnected) PhotonNetwork.ConnectUsingSettings();
+        else { statusText.text = "Sudah terhubung."; OnConnectedToMaster(); }
 
         createRoomButton.onClick.AddListener(CreateRoom); 
         joinRoomButton.onClick.AddListener(JoinRoom);
@@ -52,36 +42,29 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public void CreateRoom()
     {
         if (string.IsNullOrEmpty(namaRoomInput.text) || string.IsNullOrEmpty(namaPemainInput.text))
-        {
-            statusText.text = "Nama pemain & nama room tidak boleh kosong!";
-            return;
-        }
+        { statusText.text = "Nama pemain & nama room tidak boleh kosong!"; return; }
+        
         DisableUI();
         statusText.text = "Membuat room...";
-
         PhotonNetwork.NickName = namaPemainInput.text;
-        PhotonNetwork.CreateRoom(namaRoomInput.text); 
+        PhotonNetwork.CreateRoom(namaRoomInput.text);
     }
 
     public void JoinRoom()
     {
         if (string.IsNullOrEmpty(namaRoomInput.text) || string.IsNullOrEmpty(namaPemainInput.text))
-        {
-            statusText.text = "Nama pemain & nama room tidak boleh kosong!";
-            return;
-        }
+        { statusText.text = "Nama pemain & nama room tidak boleh kosong!"; return; }
+        
         DisableUI();
         statusText.text = "Bergabung ke room...";
-
         PhotonNetwork.NickName = namaPemainInput.text;
         PhotonNetwork.JoinRoom(namaRoomInput.text);
     }
 
-    // --- CALLBACKS PHOTON ---
     public override void OnConnectedToMaster()
     {
-        PhotonNetwork.AutomaticallySyncScene = true; 
-        PhotonNetwork.JoinLobby(); 
+        PhotonNetwork.AutomaticallySyncScene = true;
+        PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinedLobby()
@@ -93,13 +76,11 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         statusText.text = "Berhasil Masuk! Memuat RoomScene...";
-        // Client dan Host memuat RoomScene
-        PhotonNetwork.LoadLevel(SceneNames.Room); 
+        PhotonNetwork.LoadLevel(SceneNames.Room);
     }
 
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        Debug.LogError("Gagal join room: " + message);
         statusText.text = "Gagal join room: " + message;
         EnableUI();
     }

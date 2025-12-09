@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Bounce pad that launches players upward
-/// </summary>
 public class BouncePad : MonoBehaviour
 {
     [Header("Bounce Settings")]
@@ -21,41 +18,19 @@ public class BouncePad : MonoBehaviour
             Rigidbody playerRb = collision.gameObject.GetComponent<Rigidbody>();
             if (playerRb != null)
             {
-                // Reset vertical velocity if enabled
                 if (resetVerticalVelocity)
-                {
                     playerRb.velocity = new Vector3(playerRb.velocity.x, 0f, playerRb.velocity.z);
-                }
-
-                // Apply upward bounce force
+                
                 playerRb.AddForce(Vector3.up * bounceForce, ForceMode.Impulse);
-
-                // Visual/audio feedback
                 PlayFeedback();
-
-                Debug.Log($"Player bounced! Force: {bounceForce}");
             }
         }
     }
 
     private void PlayFeedback()
     {
-        // Trigger animation
-        if (animator != null)
-        {
-            animator.SetTrigger("Bounce");
-        }
-
-        // Play sound
-        if (bounceSound != null)
-        {
-            bounceSound.Play();
-        }
-
-        // Spawn particles
-        if (bounceParticles != null)
-        {
-            bounceParticles.Play();
-        }
+        animator?.SetTrigger("Bounce");
+        bounceSound?.Play();
+        bounceParticles?.Play();
     }
 }
