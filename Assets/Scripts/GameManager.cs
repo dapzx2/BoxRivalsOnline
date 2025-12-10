@@ -172,12 +172,39 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient || boxSpawner == null) return;
 
-        Vector3[] boxPositions = {
-            new Vector3(0, 1.5f, 0), new Vector3(12, 2.5f, 0), new Vector3(20, 3.5f, 5),
-            new Vector3(28, 2.5f, -3), new Vector3(35, 4.5f, 2), new Vector3(42, 3.5f, -5),
-            new Vector3(50, 5.5f, 0), new Vector3(58, 4.5f, 3), new Vector3(65, 6.5f, 0),
-            new Vector3(75, 6.5f, 0)
-        };
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        Vector3[] boxPositions;
+
+        if (sceneName == SceneNames.Level3_SkyPlatforms)
+        {
+            boxPositions = new Vector3[] {
+                new Vector3(0, 1.5f, 0), new Vector3(12, 2.5f, 0), new Vector3(20, 3.5f, 5),
+                new Vector3(28, 2.5f, -3), new Vector3(35, 4.5f, 2), new Vector3(42, 3.5f, -5),
+                new Vector3(50, 5.5f, 0), new Vector3(58, 4.5f, 3), new Vector3(65, 6.5f, 0),
+                new Vector3(75, 6.5f, 0)
+            };
+        }
+        else if (sceneName == SceneNames.Level3_ObstacleRush)
+        {
+            boxPositions = new Vector3[] {
+                new Vector3(0, 1.5f, 0), new Vector3(12, 2.5f, 0), new Vector3(22, 3f, 0),
+                new Vector3(32, 3.5f, 0), new Vector3(42, 4f, 0), new Vector3(52, 4.5f, 0),
+                new Vector3(62, 5f, 0), new Vector3(72, 5.5f, 0), new Vector3(82, 6f, 0),
+                new Vector3(92, 6.5f, 0)
+            };
+        }
+        else if (sceneName == SceneNames.Level3_RampRace)
+        {
+            boxPositions = new Vector3[] {
+                new Vector3(0, 1.5f, 0), new Vector3(25, 5f, 0), new Vector3(45, 7f, 0),
+                new Vector3(65, 9f, 0), new Vector3(85, 11f, 0), new Vector3(105, 13f, 0),
+                new Vector3(125, 15f, 0), new Vector3(135, 13f, 0)
+            };
+        }
+        else
+        {
+            boxPositions = new Vector3[] { new Vector3(0, 1.5f, 0) };
+        }
 
         boxSpawner.totalBoxCount = boxPositions.Length;
         string prefabName = boxSpawner.boxPrefab != null ? boxSpawner.boxPrefab.name : "KotakKoleksi";

@@ -24,7 +24,7 @@ public class MapRouletteManager : MonoBehaviourPunCallbacks
         if (particleEffect != null) particleEffect.SetActive(false);
         if (PhotonNetwork.IsMasterClient)
         {
-            selectedMapIndex = 0;
+            selectedMapIndex = Random.Range(0, mapSceneNames.Length);
             photonView.RPC(nameof(RpcStartRoulette), RpcTarget.AllBuffered, selectedMapIndex);
         }
     }

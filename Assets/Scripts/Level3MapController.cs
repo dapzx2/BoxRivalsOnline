@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 public class Level3MapController : MonoBehaviourPun
 {
-    [SerializeField] private string mapName = "Unknown Map";
     [SerializeField] private Transform[] playerSpawnPoints;
     [SerializeField] private Transform[] boxSpawnPoints;
     [SerializeField] private Transform respawnPoint;

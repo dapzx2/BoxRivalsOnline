@@ -26,4 +26,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level3_SkyPlatforms.unity
     guid: 4df4167a2b776c4418167eea7da89ee9
+  - enabled: 1
+    path: Assets/Scenes/Level3_ObstacleRush.unity
+    guid: 65fc573d00f3ff740992e99a76ba31cc
+  - enabled: 1
+    path: Assets/Scenes/Level3_RampRace.unity
+    guid: 5dee92e25fae6424ba0cde590775e5fe
   m_configObjects: {}
