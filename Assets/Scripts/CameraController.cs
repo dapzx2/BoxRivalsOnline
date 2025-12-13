@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CameraController : MonoBehaviour
 {
@@ -18,12 +19,28 @@ public class CameraController : MonoBehaviour
 
     private float rotasiX = 20f;
     private float rotasiY;
+    private bool hasInitialized;
 
-    void Start() { if (currentTarget != null) rotasiY = currentTarget.eulerAngles.y; }
+    void OnEnable()
+    {
+        hasInitialized = false;
+        
+        if (GetComponent<AudioListener>() == null)
+            gameObject.AddComponent<AudioListener>();
+            
+        AudioListener.pause = false;
+        AudioListener.volume = 1f;
+    }
 
     void LateUpdate()
     {
         if (!currentTarget) return;
+
+        if (!hasInitialized)
+        {
+            InitializeCameraRotation();
+            hasInitialized = true;
+        }
 
         if (isControlActive)
         {
@@ -41,5 +58,22 @@ public class CameraController : MonoBehaviour
         Quaternion rotasi = Quaternion.Euler(rotasiX, rotasiY, 0);
         transform.rotation = rotasi;
         transform.position = rotasi * new Vector3(0, 0, -jarak) + currentTarget.position;
+    }
+
+    void InitializeCameraRotation()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        
+        if (sceneName == SceneNames.Level3_RampRace || 
+            sceneName == SceneNames.Level3_ObstacleRush || 
+            sceneName == SceneNames.Level3_SkyPlatforms)
+        {
+            rotasiY = 90f;
+            rotasiX = 25f;
+        }
+        else
+        {
+            rotasiY = currentTarget.eulerAngles.y;
+        }
     }
 }

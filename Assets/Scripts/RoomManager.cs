@@ -25,6 +25,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     void UpdatePlayerListAndUI()
     {
         startGameButton.gameObject.SetActive(PhotonNetwork.IsMasterClient);
+        
         player1Text.text = PhotonNetwork.PlayerList.Length > 0 
             ? "Pemain 1: " + PhotonNetwork.PlayerList[0].NickName 
             : "Pemain 1: (Kosong)";
@@ -38,7 +39,10 @@ public class RoomManager : MonoBehaviourPunCallbacks
                 player2Text.text += $"\n<i>Sedang menunggu {hostName} memilih...</i>";
             }
         }
-        else player2Text.text = "Pemain 2: <i>Sedang Menunggu...</i>";
+        else
+        {
+            player2Text.text = "Pemain 2: <i>Sedang Menunggu...</i>";
+        }
     }
 
     void LeaveRoom()
@@ -48,7 +52,10 @@ public class RoomManager : MonoBehaviourPunCallbacks
         else SceneManager.LoadScene(SceneNames.Lobby);
     }
 
-    void StartGame() { if (PhotonNetwork.IsMasterClient) SceneManager.LoadScene(SceneNames.MenuLevel); }
+    void StartGame()
+    {
+        if (PhotonNetwork.IsMasterClient) SceneManager.LoadScene(SceneNames.MenuLevel);
+    }
 
     public override void OnPlayerEnteredRoom(Player newPlayer) => UpdatePlayerListAndUI();
     public override void OnPlayerLeftRoom(Player otherPlayer) => UpdatePlayerListAndUI();
@@ -63,7 +70,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public override void OnRoomPropertiesUpdate(Hashtable changedProps)
     {
         if (!PhotonNetwork.IsMasterClient && changedProps.TryGetValue("Reloading", out object r) && r is bool b && b)
+        {
             if (SceneManager.GetActiveScene().name != SceneNames.Room)
                 SceneManager.LoadScene(SceneNames.Room);
+        }
     }
 }

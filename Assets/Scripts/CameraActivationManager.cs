@@ -16,6 +16,7 @@ public class CameraActivationManager : MonoBehaviour
     {
         if (camera1Controller == null || camera2Controller == null) return;
         if (!Input.GetMouseButtonDown(0)) return;
+        
         if (uiManager?.panelCeritaAwal != null && uiManager.panelCeritaAwal.activeInHierarchy) return;
 
         bool leftSide = Input.mousePosition.x < Screen.width / 2f;

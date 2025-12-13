@@ -18,18 +18,27 @@ public class SmoothNetworkSync : MonoBehaviourPun, IPunObservable
         networkRotation = transform.rotation;
     }
 
-    void Start() => Invoke(nameof(SetupRemotePlayer), 0.1f);
+    void Start()
+    {
+        Invoke(nameof(SetupRemotePlayer), 0.1f);
+    }
 
     void SetupRemotePlayer()
     {
         if (photonView.IsMine) return;
+        
         isRemotePlayer = true;
-        if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
     }
 
     void Update()
     {
         if (!isRemotePlayer) return;
+        
         transform.position = Vector3.Lerp(transform.position, networkPosition, Time.deltaTime * positionLerpSpeed);
         transform.rotation = Quaternion.Lerp(transform.rotation, networkRotation, Time.deltaTime * rotationLerpSpeed);
     }
@@ -45,6 +54,7 @@ public class SmoothNetworkSync : MonoBehaviourPun, IPunObservable
         {
             networkPosition = (Vector3)stream.ReceiveNext();
             networkRotation = (Quaternion)stream.ReceiveNext();
+
             if (Vector3.Distance(transform.position, networkPosition) > 5f)
             {
                 transform.position = networkPosition;

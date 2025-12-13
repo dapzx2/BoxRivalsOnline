@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Photon.Pun;
-using UnityEngine.SceneManagement;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class MenuLevelController : MonoBehaviourPunCallbacks
@@ -25,17 +24,8 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
 
         if (!PhotonNetwork.IsMasterClient)
         {
-            if (level1Button != null) level1Button.interactable = false;
-            if (level2Button != null) level2Button.interactable = false;
-            if (level3Button != null) level3Button.interactable = false;
-            if (backToLobbyButton != null) backToLobbyButton.interactable = false;
-
-            if (teksMenungguHost != null)
-            {
-                teksMenungguHost.gameObject.SetActive(true);
-                string hostName = PhotonNetwork.MasterClient?.NickName ?? "Host";
-                teksMenungguHost.text = $"<i>Sedang menunggu {hostName} memilih level...</i>";
-            }
+            DisableButtons();
+            ShowWaitingText();
             return;
         }
 
@@ -45,6 +35,24 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
         level2Button.onClick.AddListener(() => PrepareLoad(2));
         level3Button.onClick.AddListener(() => PrepareLoad(3));
         if (backToLobbyButton != null) backToLobbyButton.onClick.AddListener(BackToLobby);
+    }
+
+    void DisableButtons()
+    {
+        if (level1Button != null) level1Button.interactable = false;
+        if (level2Button != null) level2Button.interactable = false;
+        if (level3Button != null) level3Button.interactable = false;
+        if (backToLobbyButton != null) backToLobbyButton.interactable = false;
+    }
+
+    void ShowWaitingText()
+    {
+        if (teksMenungguHost != null)
+        {
+            teksMenungguHost.gameObject.SetActive(true);
+            string hostName = PhotonNetwork.MasterClient?.NickName ?? "Host";
+            teksMenungguHost.text = $"<i>Sedang menunggu {hostName} memilih level...</i>";
+        }
     }
 
     System.Collections.IEnumerator AutoRestartGame()
@@ -63,6 +71,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
     void PrepareLoad(int index)
     {
         if (!PhotonNetwork.IsMasterClient) return;
+        
         levelToLoad = index;
         PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "SelectedLevel", levelToLoad }, { "Reloading", false } });
 
@@ -96,6 +105,6 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
     void BackToLobby()
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom) PhotonNetwork.LeaveRoom();
-        SceneManager.LoadScene(SceneNames.Lobby);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNames.Lobby);
     }
 }

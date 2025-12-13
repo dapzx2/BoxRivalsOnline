@@ -12,14 +12,26 @@ public class BoxSpawner : MonoBehaviourPun
     public int jumlahKotakBonus = 2;
     public float minDistance = 2.5f;
     public int totalBoxCount = 0;
+    
     private int boxesCollectedCount = 0;
 
     System.Collections.IEnumerator Start()
     {
         float timer = 0;
-        while (GameManager.Instance == null && timer < 3.0f) { timer += Time.deltaTime; yield return null; }
-        if (GameManager.Instance == null) SceneManager.LoadScene(SceneNames.Lobby);
-        boxesCollectedCount = 0;
+        while (GameManager.Instance == null && timer < 3.0f) 
+        { 
+            timer += Time.deltaTime; 
+            yield return null; 
+        }
+        
+        if (GameManager.Instance == null)
+        {
+            SceneManager.LoadScene(SceneNames.Lobby);
+        }
+        else
+        {
+            boxesCollectedCount = 0;
+        }
     }
 
     public void SetBoxCounts(int biasa, int bonus)
@@ -33,6 +45,7 @@ public class BoxSpawner : MonoBehaviourPun
     public void SpawnForVaultLevel(Collider platformCollider, float openAreaSize)
     {
         if (!PhotonNetwork.IsMasterClient) return;
+
         totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
         Bounds bounds = platformCollider.bounds;
         float padding = 3.0f;
@@ -46,9 +59,11 @@ public class BoxSpawner : MonoBehaviourPun
 
         var positions = GetValidOpenAreaPositions(openAreaSize, openAreaSize, bounds).OrderBy(a => Random.value).ToList();
         int count = Mathf.Min(jumlahKotakBiasa, positions.Count);
+        
         for (int i = 0; i < count; i++)
         {
-            Vector3 pos = positions[i]; pos.y = 0.5f;
+            Vector3 pos = positions[i];
+            pos.y = 0.5f;
             PhotonNetwork.Instantiate(boxPrefab.name, pos, Quaternion.identity);
         }
     }
@@ -88,8 +103,14 @@ public class BoxSpawner : MonoBehaviourPun
         int gridH = Mathf.FloorToInt(areaZ / minDistance);
 
         for (int x = 0; x < gridW; x++)
+        {
             for (int z = 0; z < gridH; z++)
-                positions.Add(new Vector3(x * minDistance - (areaX / 2f) + (minDistance / 2f), 0, z * minDistance - (areaZ / 2f) + (minDistance / 2f)));
+            {
+                float posX = x * minDistance - (areaX / 2f) + (minDistance / 2f);
+                float posZ = z * minDistance - (areaZ / 2f) + (minDistance / 2f);
+                positions.Add(new Vector3(posX, 0, posZ));
+            }
+        }
 
         SpawnBoxesWithMinimumDistance(positions);
     }
@@ -102,13 +123,15 @@ public class BoxSpawner : MonoBehaviourPun
 
         for (int i = 0; i < jumlahKotakBonus && spawned < total; i++, spawned++)
         {
-            Vector3 pos = positions[spawned]; pos.y = 0.75f;
+            Vector3 pos = positions[spawned];
+            pos.y = 0.75f;
             PhotonNetwork.Instantiate(boxBonusPrefab.name, pos, Quaternion.identity);
         }
 
         for (int i = 0; i < jumlahKotakBiasa && spawned < total; i++, spawned++)
         {
-            Vector3 pos = positions[spawned]; pos.y = 0.5f;
+            Vector3 pos = positions[spawned];
+            pos.y = 0.5f;
             PhotonNetwork.Instantiate(boxPrefab.name, pos, Quaternion.identity);
         }
     }
@@ -117,12 +140,23 @@ public class BoxSpawner : MonoBehaviourPun
     public void RpcDestroyBox(int viewID)
     {
         if (!PhotonNetwork.IsMasterClient) return;
+        
+        boxesCollectedCount++;
+        
         PhotonView targetView = PhotonView.Find(viewID);
         if (targetView != null)
         {
             PhotonNetwork.Destroy(targetView.gameObject);
-            boxesCollectedCount++;
-            if (boxesCollectedCount >= totalBoxCount) GameManager.Instance?.EndGame();
         }
+        
+        if (boxesCollectedCount >= totalBoxCount)
+        {
+            Invoke(nameof(TriggerEndGame), 0.5f);
+        }
+    }
+
+    void TriggerEndGame()
+    {
+        GameManager.Instance?.EndGame();
     }
 }

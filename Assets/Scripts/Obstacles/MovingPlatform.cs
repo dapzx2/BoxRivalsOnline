@@ -1,67 +1,57 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class MovingPlatform : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private List<Transform> waypoints = new List<Transform>();
+    [SerializeField] private Vector3 moveOffset = new Vector3(0, 3f, 0);
     [SerializeField] private float moveSpeed = 2f;
-    [SerializeField] private bool loopPath = true;
-    [SerializeField] private float waypointReachThreshold = 0.1f;
 
-    private int currentWaypointIndex;
-    private bool movingForward = true;
+    private Vector3 startPosition;
+    private Vector3 endPosition;
+    private bool movingToEnd = true;
+
+    void Start()
+    {
+        startPosition = transform.position;
+        endPosition = startPosition + moveOffset;
+    }
 
     void Update()
     {
-        if (waypoints.Count < 2) return;
+        Vector3 target = movingToEnd ? endPosition : startPosition;
+        transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
 
-        Transform target = waypoints[currentWaypointIndex];
-        transform.position = Vector3.MoveTowards(transform.position, target.position, moveSpeed * Time.deltaTime);
-
-        if (Vector3.Distance(transform.position, target.position) < waypointReachThreshold)
-            SelectNextWaypoint();
-    }
-
-    void SelectNextWaypoint()
-    {
-        if (loopPath)
-        {
-            currentWaypointIndex = (currentWaypointIndex + 1) % waypoints.Count;
-        }
-        else
-        {
-            if (movingForward)
-            {
-                currentWaypointIndex++;
-                if (currentWaypointIndex >= waypoints.Count - 1) movingForward = false;
-            }
-            else
-            {
-                currentWaypointIndex--;
-                if (currentWaypointIndex <= 0) movingForward = true;
-            }
-        }
+        if (Vector3.Distance(transform.position, target) < 0.1f)
+            movingToEnd = !movingToEnd;
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player")) collision.transform.SetParent(transform);
+        if (collision.gameObject.CompareTag("Player")) 
+        {
+            foreach(ContactPoint contact in collision.contacts)
+            {
+                if(contact.normal.y > 0.5f) 
+                {
+                    collision.transform.SetParent(transform);
+                    break;
+                }
+            }
+        }
     }
 
     void OnCollisionExit(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player")) collision.transform.SetParent(null);
+        if (collision.gameObject.CompareTag("Player")) 
+            collision.transform.SetParent(null);
     }
 
     void OnDrawGizmos()
     {
-        if (waypoints.Count < 2) return;
         Gizmos.color = Color.cyan;
-        for (int i = 0; i < waypoints.Count - 1; i++)
-            if (waypoints[i] != null && waypoints[i + 1] != null)
-                Gizmos.DrawLine(waypoints[i].position, waypoints[i + 1].position);
-        if (loopPath && waypoints[waypoints.Count - 1] != null && waypoints[0] != null)
-            Gizmos.DrawLine(waypoints[waypoints.Count - 1].position, waypoints[0].position);
+        Vector3 start = Application.isPlaying ? startPosition : transform.position;
+        Vector3 end = start + moveOffset;
+        Gizmos.DrawLine(start, end);
+        Gizmos.DrawWireSphere(end, 0.3f);
     }
 }

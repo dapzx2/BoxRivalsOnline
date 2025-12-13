@@ -106,6 +106,8 @@ MonoBehaviour:
   groundDeceleration: 60
   airAcceleration: 40
   airDeceleration: 10
+  eatSmallSound: {fileID: 0}
+  eatBigSound: {fileID: 0}
 --- !u!114 &-6463320154132556370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -191,6 +193,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   jumpForce: 8
   fallGravityMultiplier: 2.5
+  jumpSound: {fileID: 0}
 --- !u!114 &2588077235116721630
 MonoBehaviour:
   m_ObjectHideFlags: 0

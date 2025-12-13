@@ -3,24 +3,30 @@ using TMPro;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
-using ExitGames.Client.Photon;
 using UnityEngine.UI;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class UIManager : MonoBehaviourPunCallbacks
 {
+    [Header("Panels")]
     public GameObject panelCeritaAwal;
     public GameObject panelMisiBerhasil;
     public GameObject panelPause;
+
+    [Header("Texts")]
     public TextMeshProUGUI teksCeritaAwal;
     public TextMeshProUGUI teksSkorP1;
     public TextMeshProUGUI teksSkorP2;
     public TextMeshProUGUI teksWaktu;
     public TextMeshProUGUI teksPemenang;
+    public TextMeshProUGUI teksMenungguHost;
+
+    [Header("Buttons")]
     public Button tombolMulai;
     public Button tombolLanjutkan;
     public Button tombolKembaliKeMenu;
-    public TextMeshProUGUI teksMenungguHost;
     public Button tombolMenuGameOver;
+    
     public float waktuLevel = 60f;
 
     private bool gameBerjalan;
@@ -34,6 +40,7 @@ public class UIManager : MonoBehaviourPunCallbacks
         if (panelCeritaAwal != null) panelCeritaAwal.SetActive(false);
         if (panelMisiBerhasil != null) panelMisiBerhasil.SetActive(false);
         if (panelPause != null) panelPause.SetActive(false);
+        
         TampilkanCeritaAwal();
     }
 
@@ -56,12 +63,16 @@ public class UIManager : MonoBehaviourPunCallbacks
     {
         if (panelPause == null) return;
         panelPause.SetActive(!panelPause.activeInHierarchy);
+        
         bool isHost = PhotonNetwork.IsMasterClient;
         if (tombolLanjutkan != null) tombolLanjutkan.interactable = isHost;
         if (tombolKembaliKeMenu != null) tombolKembaliKeMenu.interactable = isHost;
     }
 
-    public void ResumeGame() { if (panelPause != null) panelPause.SetActive(false); }
+    public void ResumeGame()
+    {
+        if (panelPause != null) panelPause.SetActive(false);
+    }
 
     public void KembaliKeMenu()
     {
@@ -85,8 +96,18 @@ public class UIManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public override void OnEnable() { base.OnEnable(); PhotonNetwork.AddCallbackTarget(this); }
-    public override void OnDisable() { base.OnDisable(); PhotonNetwork.RemoveCallbackTarget(this); }
+    public override void OnEnable()
+    {
+        base.OnEnable();
+        PhotonNetwork.AddCallbackTarget(this);
+    }
+
+    public override void OnDisable()
+    {
+        base.OnDisable();
+        PhotonNetwork.RemoveCallbackTarget(this);
+    }
+
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps) => UpdateScoreboard();
     public override void OnPlayerEnteredRoom(Player newPlayer) => UpdateScoreboard();
 
@@ -143,6 +164,8 @@ public class UIManager : MonoBehaviourPunCallbacks
             string hostName = PhotonNetwork.MasterClient?.NickName ?? "Host";
             teksMenungguHost.text = "<i>Sedang menunggu " + hostName + " memilih...</i>";
         }
+        
+        AudioManager.Instance?.PlayWinnerSound();
     }
 
     void TampilkanCeritaAwal()
@@ -161,14 +184,28 @@ public class UIManager : MonoBehaviourPunCallbacks
         }
 
         int level = PhotonNetwork.CurrentRoom?.CustomProperties.TryGetValue("SelectedLevel", out object lvl) == true ? (int)lvl : 1;
+        
         if (teksCeritaAwal != null)
         {
-            teksCeritaAwal.text = level switch
+            if (level == 3)
             {
-                2 => "Labirin Menanti! Kecepatan saja tidak cukup, tunjukkan kelihaianmu menemukan jalan!",
-                3 => "The Vault! Rebut kotak bonus di tengah arena untuk meraih kemenangan!",
-                _ => "Selamat datang di Arena Latihan! Kumpulkan semua kotak untuk membuktikan kecepatanmu!"
-            };
+                string sceneName = SceneManager.GetActiveScene().name;
+                teksCeritaAwal.text = sceneName switch
+                {
+                    SceneNames.Level3_RampRace => "Ramp Race! kumpulkan semua kotak menuju finish!",
+                    SceneNames.Level3_ObstacleRush => "Obstacle Rush! Hindari rintangan dan kumpulkan semua kotak!",
+                    SceneNames.Level3_SkyPlatforms => "Sky Platforms! Lompat antar platform dan kumpulkan semua kotak!",
+                    _ => "Level 3! Kumpulkan semua kotak untuk meraih kemenangan!!"
+                };
+            }
+            else
+            {
+                teksCeritaAwal.text = level switch
+                {
+                    2 => "Labirin Menanti! Kecepatan saja tidak cukup, tunjukkan kelihaianmu menemukan jalan!",
+                    _ => "Selamat datang di Arena Latihan! Kumpulkan semua kotak untuk membuktikan kecepatanmu!"
+                };
+            }
         }
     }
 
@@ -187,6 +224,8 @@ public class UIManager : MonoBehaviourPunCallbacks
 
     public void MulaiGame()
     {
+        AudioManager.Instance?.PlayButtonSound();
+
         if (PhotonNetwork.IsMasterClient)
             PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "StartTime", PhotonNetwork.Time } });
     }

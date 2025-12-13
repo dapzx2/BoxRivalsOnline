@@ -6,16 +6,31 @@ public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 10f;
     public float groundAcceleration = 80f;
-    public float groundDeceleration = 20f;
-    public float airAcceleration = 40f;
-    public float airDeceleration = 10f;
+    public float groundDeceleration = 50f;
+    public float airAcceleration = 60f;
+    public float airDeceleration = 30f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioClip eatSmallSound;
+    [SerializeField] private AudioClip eatBigSound;
 
     private Rigidbody rb;
     private Vector2 inputGerakan;
     private Transform kamera;
     private PhotonView photonView;
-    private PhotonView boxSpawnerView;
+    private AudioSource audioSource;
     private bool isGrounded;
+    private BoxSpawner cachedBoxSpawner;
+
+    void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.spatialBlend = 0f;
+
+        if (eatSmallSound == null) eatSmallSound = Resources.Load<AudioClip>("Audio/makan_kotak_kecil");
+        if (eatBigSound == null) eatBigSound = Resources.Load<AudioClip>("Audio/makan_kotak_besar");
+    }
 
     void Start()
     {
@@ -29,11 +44,12 @@ public class PlayerController : MonoBehaviour
         if (photonView != null && photonView.IsMine)
         {
             kamera = Camera.main.transform;
-            BoxSpawner spawner = FindObjectOfType<BoxSpawner>();
-            if (spawner != null) boxSpawnerView = spawner.GetComponent<PhotonView>();
-
             CameraController camScript = kamera.GetComponent<CameraController>();
-            if (camScript != null) { camScript.currentTarget = transform; camScript.isControlActive = true; }
+            if (camScript != null)
+            {
+                camScript.currentTarget = transform;
+                camScript.isControlActive = true;
+            }
             GameManager.Instance?.UpdateScore(0);
         }
     }
@@ -49,6 +65,7 @@ public class PlayerController : MonoBehaviour
         else if (Input.GetKey(KeyCode.D)) inputGerakan.x = 1f;
 
         if (inputGerakan.magnitude > 1f) inputGerakan.Normalize();
+        
         isGrounded = Physics.Raycast(transform.position, Vector3.down, 0.6f);
     }
 
@@ -63,11 +80,15 @@ public class PlayerController : MonoBehaviour
         Vector3 currentVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
         Vector3 targetVel = moveDir * moveSpeed;
 
-        float rate = inputGerakan.magnitude > 0.1f 
-            ? (isGrounded ? groundAcceleration : airAcceleration) 
-            : (isGrounded ? groundDeceleration : airDeceleration);
+        float rate;
+        if (inputGerakan.magnitude > 0.1f)
+            rate = isGrounded ? groundAcceleration : airAcceleration;
+        else
+            rate = isGrounded ? groundDeceleration : airDeceleration;
 
-        Vector3 newVel = Vector3.MoveTowards(currentVel, inputGerakan.magnitude > 0.1f ? targetVel : Vector3.zero, rate * Time.fixedDeltaTime);
+        Vector3 target = inputGerakan.magnitude > 0.1f ? targetVel : Vector3.zero;
+        Vector3 newVel = Vector3.MoveTowards(currentVel, target, rate * Time.fixedDeltaTime);
+        
         rb.velocity = new Vector3(newVel.x, rb.velocity.y, newVel.z);
     }
 
@@ -75,23 +96,65 @@ public class PlayerController : MonoBehaviour
     {
         if (photonView == null || !photonView.IsMine) return;
 
-        int skor = 0;
-        if (other.CompareTag("KotakKoleksi")) skor = 1;
-        else if (other.CompareTag("KotakBonus")) skor = 5;
+        int scoreToAdd = 0;
+        AudioClip clipToPlay = null;
 
-        if (skor <= 0) return;
+        if (other.CompareTag("KotakKoleksi"))
+        {
+            scoreToAdd = 1;
+            clipToPlay = eatSmallSound;
+        }
+        else if (other.CompareTag("KotakBonus"))
+        {
+            scoreToAdd = 5;
+            clipToPlay = eatBigSound;
+        }
 
-        PhotonView boxView = other.GetComponent<PhotonView>();
+        if (scoreToAdd <= 0) return;
+
+        PlaySound(clipToPlay);
+        ProcessBoxCollection(other, scoreToAdd);
+    }
+
+    void PlaySound(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+        {
+            float volume = (clip == eatBigSound) ? 1.0f : 3.0f;
+            audioSource.PlayOneShot(clip, volume);
+        }
+    }
+
+    void ProcessBoxCollection(Collider boxCollider, int scoreToAdd)
+    {
+        PhotonView boxView = boxCollider.GetComponent<PhotonView>();
         if (boxView == null) return;
 
-        Collider boxCollider = other.GetComponent<Collider>();
-        if (boxCollider != null) boxCollider.enabled = false;
-        other.gameObject.SetActive(false);
+        boxCollider.enabled = false;
+        boxCollider.gameObject.SetActive(false);
 
-        int skorLama = PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("score", out object s) ? (int)s : 0;
-        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "score", skorLama + skor } });
+        int currentScore = 0;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("score", out object s)) currentScore = (int)s;
+        
+        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "score", currentScore + scoreToAdd } });
 
-        if (boxSpawnerView != null) boxSpawnerView.RPC("RpcDestroyBox", RpcTarget.MasterClient, boxView.ViewID);
-        else if (PhotonNetwork.IsMasterClient) PhotonNetwork.Destroy(other.gameObject);
+        if (cachedBoxSpawner == null) cachedBoxSpawner = FindObjectOfType<BoxSpawner>();
+        
+        if (cachedBoxSpawner != null)
+        {
+            photonView.RPC(nameof(CmdDestroyBox), RpcTarget.MasterClient, boxView.ViewID);
+        }
+    }
+
+    [PunRPC]
+    void CmdDestroyBox(int viewID)
+    {
+        if (!PhotonNetwork.IsMasterClient) return;
+        
+        if (cachedBoxSpawner == null) cachedBoxSpawner = FindObjectOfType<BoxSpawner>();
+        if (cachedBoxSpawner != null)
+        {
+            cachedBoxSpawner.RpcDestroyBox(viewID);
+        }
     }
 }

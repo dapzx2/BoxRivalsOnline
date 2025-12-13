@@ -17,7 +17,11 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         statusText.text = "Menghubungkan ke server...";
 
         if (!PhotonNetwork.IsConnected) PhotonNetwork.ConnectUsingSettings();
-        else { statusText.text = "Sudah terhubung."; OnConnectedToMaster(); }
+        else
+        {
+            statusText.text = "Sudah terhubung.";
+            OnConnectedToMaster();
+        }
 
         createRoomButton.onClick.AddListener(CreateRoom);
         joinRoomButton.onClick.AddListener(JoinRoom);
@@ -42,7 +46,10 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public void CreateRoom()
     {
         if (string.IsNullOrEmpty(namaRoomInput.text) || string.IsNullOrEmpty(namaPemainInput.text))
-        { statusText.text = "Nama pemain & nama room tidak boleh kosong!"; return; }
+        {
+            statusText.text = "Nama pemain & nama room tidak boleh kosong!";
+            return;
+        }
 
         DisableUI();
         statusText.text = "Membuat room...";
@@ -53,7 +60,10 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public void JoinRoom()
     {
         if (string.IsNullOrEmpty(namaRoomInput.text) || string.IsNullOrEmpty(namaPemainInput.text))
-        { statusText.text = "Nama pemain & nama room tidak boleh kosong!"; return; }
+        {
+            statusText.text = "Nama pemain & nama room tidak boleh kosong!";
+            return;
+        }
 
         DisableUI();
         statusText.text = "Bergabung ke room...";

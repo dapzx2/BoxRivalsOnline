@@ -6,25 +6,38 @@ public class PlayerJumpController : MonoBehaviourPun
 {
     [SerializeField] private float jumpForce = 12f;
     [SerializeField] private float fallGravityMultiplier = 2.5f;
+    [SerializeField] private AudioClip jumpSound;
 
     private Rigidbody rb;
     private bool isGrounded;
     private bool hasJumped;
+    private AudioSource audioSource;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+        
+        audioSource.spatialBlend = 0f;
+        if (jumpSound == null) jumpSound = Resources.Load<AudioClip>("Audio/jump");
+
         if (!photonView.IsMine) enabled = false;
     }
 
     void Update()
     {
         if (!photonView.IsMine) return;
+        
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !hasJumped)
         {
+            transform.SetParent(null);
             rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);
             isGrounded = false;
             hasJumped = true;
+
+            if (jumpSound != null && audioSource != null)
+                audioSource.PlayOneShot(jumpSound, 0.3f);
         }
     }
 

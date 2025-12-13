@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 3d505dd72ab130e489d46c8a4e544979, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -2110,6 +2110,7 @@ GameObject:
   - component: {fileID: 933792012}
   - component: {fileID: 933792011}
   - component: {fileID: 933792015}
+  - component: {fileID: 933792016}
   m_Layer: 0
   m_Name: MovingObstacle
   m_TagString: Untagged
@@ -2197,7 +2198,7 @@ Transform:
   m_GameObject: {fileID: 933792010}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 82, y: 3.6000001, z: 0}
+  m_LocalPosition: {x: 82, y: 4.3, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2215,10 +2216,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waypoints: []
+  moveOffset: {x: 0, y: 3, z: 0}
   moveSpeed: 2
-  loopPath: 1
-  waypointReachThreshold: 0.1
+--- !u!114 &933792016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 933792010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveOffset: {x: 0, y: 3, z: 0}
+  moveSpeed: 2
 --- !u!1 &949433562
 GameObject:
   m_ObjectHideFlags: 0
@@ -2379,7 +2392,7 @@ Transform:
   m_GameObject: {fileID: 979419555}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 32, y: 3.1, z: 0}
+  m_LocalPosition: {x: 32, y: 3.8, z: 0}
   m_LocalScale: {x: 4, y: 0.5, z: 4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2414,6 +2427,7 @@ GameObject:
   - component: {fileID: 983626877}
   - component: {fileID: 983626876}
   - component: {fileID: 983626880}
+  - component: {fileID: 983626881}
   m_Layer: 0
   m_Name: MovingObstacle
   m_TagString: Untagged
@@ -2501,7 +2515,7 @@ Transform:
   m_GameObject: {fileID: 983626875}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 62, y: 3, z: 0}
+  m_LocalPosition: {x: 62, y: 3.7, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2519,10 +2533,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waypoints: []
+  moveOffset: {x: 0, y: 3, z: 0}
   moveSpeed: 2
-  loopPath: 1
-  waypointReachThreshold: 0.1
+--- !u!114 &983626881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 983626875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveOffset: {x: 0, y: 3, z: 0}
+  moveSpeed: 2
 --- !u!21 &1013756596
 Material:
   serializedVersion: 8
@@ -4554,6 +4580,7 @@ GameObject:
   - component: {fileID: 1604147472}
   - component: {fileID: 1604147471}
   - component: {fileID: 1604147475}
+  - component: {fileID: 1604147476}
   m_Layer: 0
   m_Name: MovingObstacle
   m_TagString: Untagged
@@ -4641,7 +4668,7 @@ Transform:
   m_GameObject: {fileID: 1604147470}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 42, y: 2.4, z: 0}
+  m_LocalPosition: {x: 42, y: 3.1, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4659,10 +4686,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waypoints: []
+  moveOffset: {x: 0, y: 3, z: 0}
   moveSpeed: 2
-  loopPath: 1
-  waypointReachThreshold: 0.1
+--- !u!114 &1604147476
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604147470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveOffset: {x: 0, y: 3, z: 0}
+  moveSpeed: 2
 --- !u!21 &1613886783
 Material:
   serializedVersion: 8
@@ -4846,7 +4885,7 @@ Transform:
   m_GameObject: {fileID: 1619022088}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 72, y: 4.3, z: 0}
+  m_LocalPosition: {x: 72, y: 5, z: 0}
   m_LocalScale: {x: 4, y: 0.5, z: 4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5145,6 +5184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71acf14e894485b4981849015b3d375c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  deathSound: {fileID: 0}
 --- !u!1 &1698808153
 GameObject:
   m_ObjectHideFlags: 0
@@ -5690,7 +5730,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -6013,7 +6053,7 @@ Transform:
   m_GameObject: {fileID: 2058632336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 12, y: 2.5, z: 0}
+  m_LocalPosition: {x: 12, y: 3.2, z: 0}
   m_LocalScale: {x: 4, y: 0.5, z: 4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6228,6 +6268,7 @@ GameObject:
   - component: {fileID: 2089603685}
   - component: {fileID: 2089603684}
   - component: {fileID: 2089603688}
+  - component: {fileID: 2089603689}
   m_Layer: 0
   m_Name: MovingObstacle
   m_TagString: Untagged
@@ -6315,7 +6356,7 @@ Transform:
   m_GameObject: {fileID: 2089603683}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 22, y: 1.8, z: 0}
+  m_LocalPosition: {x: 22, y: 2.5, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6333,10 +6374,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waypoints: []
+  moveOffset: {x: 0, y: 3, z: 0}
   moveSpeed: 2
-  loopPath: 1
-  waypointReachThreshold: 0.1
+--- !u!114 &2089603689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2089603683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7a84e2c3288944686bad6820ea650d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveOffset: {x: 0, y: 3, z: 0}
+  moveSpeed: 2
 --- !u!1 &2104018794
 GameObject:
   m_ObjectHideFlags: 0
@@ -6439,7 +6492,7 @@ Transform:
   m_GameObject: {fileID: 2104018794}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 52, y: 3.7, z: 0}
+  m_LocalPosition: {x: 52, y: 4.4, z: 0}
   m_LocalScale: {x: 4, y: 0.5, z: 4}
   m_ConstrainProportionsScale: 0
   m_Children: []

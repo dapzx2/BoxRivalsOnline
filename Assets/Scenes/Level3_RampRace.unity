@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 3d505dd72ab130e489d46c8a4e544979, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -1350,7 +1350,7 @@ Transform:
   m_GameObject: {fileID: 370659300}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 4, z: 0}
   m_LocalScale: {x: 10, y: 1, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2057,6 +2057,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71acf14e894485b4981849015b3d375c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  deathSound: {fileID: 0}
 --- !u!1 &654733819
 GameObject:
   m_ObjectHideFlags: 0
@@ -2359,7 +2360,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -3829,9 +3830,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bounceForce: 15
   resetVerticalVelocity: 1
-  animator: {fileID: 0}
-  bounceSound: {fileID: 0}
-  bounceParticles: {fileID: 0}
 --- !u!21 &1402133238
 Material:
   serializedVersion: 8
@@ -5266,6 +5264,7 @@ GameObject:
   - component: {fileID: 1762383605}
   - component: {fileID: 1762383604}
   - component: {fileID: 1762383603}
+  - component: {fileID: 1762383607}
   m_Layer: 0
   m_Name: BouncePad
   m_TagString: Untagged
@@ -5361,6 +5360,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1762383607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1762383602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01555c86ad53b0a4ca9a2dc889f135bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bounceForce: 15
+  resetVerticalVelocity: 1
 --- !u!1 &1878433623
 GameObject:
   m_ObjectHideFlags: 0
@@ -5507,6 +5520,7 @@ GameObject:
   - component: {fileID: 1882649477}
   - component: {fileID: 1882649476}
   - component: {fileID: 1882649475}
+  - component: {fileID: 1882649479}
   m_Layer: 0
   m_Name: BouncePad
   m_TagString: Untagged
@@ -5602,6 +5616,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1882649479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1882649474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01555c86ad53b0a4ca9a2dc889f135bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bounceForce: 15
+  resetVerticalVelocity: 1
 --- !u!1 &2015342915
 GameObject:
   m_ObjectHideFlags: 0

@@ -24,7 +24,9 @@ public class BouncePad : MonoBehaviour
         if (playerRb == null) return;
 
         if (resetVerticalVelocity)
+        {
             playerRb.velocity = new Vector3(playerRb.velocity.x, 0f, playerRb.velocity.z);
+        }
 
         playerRb.AddForce(Vector3.up * bounceForce, ForceMode.Impulse);
         PlayFeedback();
