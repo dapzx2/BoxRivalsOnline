@@ -44,13 +44,21 @@ public class UIManager : MonoBehaviourPunCallbacks
         TampilkanCeritaAwal();
     }
 
+    private int lastSeconds = -1;
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape) && PhotonNetwork.IsMasterClient) TogglePauseMenu();
         if (!gameBerjalan) return;
 
         double sisaWaktu = waktuSelesaiGame - PhotonNetwork.Time;
-        if (teksWaktu != null) teksWaktu.text = "Sisa Waktu: " + Mathf.Max(0, Mathf.CeilToInt((float)sisaWaktu)) + " detik";
+        int currentSeconds = Mathf.Max(0, Mathf.CeilToInt((float)sisaWaktu));
+
+        if (currentSeconds != lastSeconds)
+        {
+            lastSeconds = currentSeconds;
+            if (teksWaktu != null) teksWaktu.text = "Sisa Waktu: " + currentSeconds + " detik";
+        }
 
         if (sisaWaktu <= 0 && gameBerjalan)
         {
@@ -84,7 +92,7 @@ public class UIManager : MonoBehaviourPunCallbacks
         {
             if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
             {
-                PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "Reloading", true } });
+                PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { Constants.ReloadingProperty, true } });
                 PhotonNetwork.LoadLevel(SceneNames.MenuLevel);
             }
             else SceneManager.LoadScene(SceneNames.Lobby);
@@ -211,7 +219,7 @@ public class UIManager : MonoBehaviourPunCallbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
-        if (!propertiesThatChanged.TryGetValue("StartTime", out object startTimeObj)) return;
+        if (!propertiesThatChanged.TryGetValue(Constants.StartTimeProperty, out object startTimeObj)) return;
         double startTime = (double)startTimeObj;
         waktuSelesaiGame = startTime + waktuLevel;
 
@@ -227,6 +235,6 @@ public class UIManager : MonoBehaviourPunCallbacks
         AudioManager.Instance?.PlayButtonSound();
 
         if (PhotonNetwork.IsMasterClient)
-            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "StartTime", PhotonNetwork.Time } });
+            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { Constants.StartTimeProperty, PhotonNetwork.Time } });
     }
 }

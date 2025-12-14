@@ -13,6 +13,16 @@ public class BouncePad : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         bounceSound = GetComponent<AudioSource>();
+        if (bounceSound == null) bounceSound = gameObject.AddComponent<AudioSource>();
+        
+        bounceSound.playOnAwake = false;
+        bounceSound.playOnAwake = false;
+        bounceSound.spatialBlend = 0f; 
+        bounceSound.volume = 1.0f;
+        
+        AudioClip clip = Resources.Load<AudioClip>("Audio/bounce_pad");
+        if (clip != null) bounceSound.clip = clip;
+        
         bounceParticles = GetComponentInChildren<ParticleSystem>();
     }
 
@@ -35,7 +45,7 @@ public class BouncePad : MonoBehaviour
     void PlayFeedback()
     {
         if (animator != null) animator.SetTrigger("Bounce");
-        if (bounceSound != null) bounceSound.Play();
+        if (bounceSound != null && bounceSound.clip != null) bounceSound.Play();
         if (bounceParticles != null) bounceParticles.Play();
     }
 }

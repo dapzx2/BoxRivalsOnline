@@ -42,56 +42,11 @@ public class BoxSpawner : MonoBehaviourPun
         boxesCollectedCount = 0;
     }
 
-    public void SpawnForVaultLevel(Collider platformCollider, float openAreaSize)
-    {
-        if (!PhotonNetwork.IsMasterClient) return;
 
-        totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
-        Bounds bounds = platformCollider.bounds;
-        float padding = 3.0f;
 
-        for (int i = 0; i < jumlahKotakBonus; i++)
-        {
-            float x = Random.Range(bounds.center.x - bounds.extents.x + padding, bounds.center.x + bounds.extents.x - padding);
-            float z = Random.Range(bounds.center.z - bounds.extents.z + padding, bounds.center.z + bounds.extents.z - padding);
-            PhotonNetwork.Instantiate(boxBonusPrefab.name, new Vector3(x, bounds.max.y + 0.75f, z), Quaternion.identity);
-        }
 
-        var positions = GetValidOpenAreaPositions(openAreaSize, openAreaSize, bounds).OrderBy(a => Random.value).ToList();
-        int count = Mathf.Min(jumlahKotakBiasa, positions.Count);
-        
-        for (int i = 0; i < count; i++)
-        {
-            Vector3 pos = positions[i];
-            pos.y = 0.5f;
-            PhotonNetwork.Instantiate(boxPrefab.name, pos, Quaternion.identity);
-        }
-    }
 
-    private List<Vector3> GetValidOpenAreaPositions(float areaX, float areaZ, Bounds exclusionZone)
-    {
-        List<Vector3> validPositions = new List<Vector3>();
-        int gridW = Mathf.FloorToInt(areaX / minDistance);
-        int gridH = Mathf.FloorToInt(areaZ / minDistance);
-        exclusionZone.Expand(minDistance * 2);
 
-        for (int x = 0; x < gridW; x++)
-        {
-            for (int z = 0; z < gridH; z++)
-            {
-                Vector3 pos = new Vector3(x * minDistance - (areaX / 2f), 0, z * minDistance - (areaZ / 2f));
-                if (!exclusionZone.Contains(pos)) validPositions.Add(pos);
-            }
-        }
-        return validPositions;
-    }
-
-    public void SpawnBoxesInMaze(List<Vector2Int> floorPositions, MazeGenerator mazeGen)
-    {
-        if (!PhotonNetwork.IsMasterClient) return;
-        totalBoxCount = jumlahKotakBiasa + jumlahKotakBonus;
-        SpawnBoxesWithMinimumDistance(floorPositions.Select(p => mazeGen.GetWorldPosition(p, 0f)).ToList());
-    }
 
     public void SpawnBoxesInOpenArea(float areaX, float areaZ)
     {
@@ -128,12 +83,14 @@ public class BoxSpawner : MonoBehaviourPun
             PhotonNetwork.Instantiate(boxBonusPrefab.name, pos, Quaternion.identity);
         }
 
-        for (int i = 0; i < jumlahKotakBiasa && spawned < total; i++, spawned++)
+    for (int i = 0; i < jumlahKotakBiasa && spawned < total; i++, spawned++)
         {
             Vector3 pos = positions[spawned];
             pos.y = 0.5f;
             PhotonNetwork.Instantiate(boxPrefab.name, pos, Quaternion.identity);
         }
+
+        totalBoxCount = spawned;
     }
 
     [PunRPC]
@@ -141,17 +98,16 @@ public class BoxSpawner : MonoBehaviourPun
     {
         if (!PhotonNetwork.IsMasterClient) return;
         
-        boxesCollectedCount++;
-        
         PhotonView targetView = PhotonView.Find(viewID);
         if (targetView != null)
         {
+            boxesCollectedCount++;
             PhotonNetwork.Destroy(targetView.gameObject);
-        }
-        
-        if (boxesCollectedCount >= totalBoxCount)
-        {
-            Invoke(nameof(TriggerEndGame), 0.5f);
+            
+            if (boxesCollectedCount >= totalBoxCount)
+            {
+                Invoke(nameof(TriggerEndGame), 1.0f);
+            }
         }
     }
 

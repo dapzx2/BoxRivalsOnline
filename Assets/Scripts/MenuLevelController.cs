@@ -16,7 +16,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        if (PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom?.CustomProperties.TryGetValue("IsRestart", out object r) == true && r is bool b && b)
+        if (PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom?.CustomProperties.TryGetValue(Constants.IsRestartProperty, out object r) == true && r is bool b && b)
         {
             StartCoroutine(AutoRestartGame());
             return;
@@ -61,10 +61,10 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsMasterClient)
         {
-            int level = PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("RestartToLevel", out object lvl) ? (int)lvl : 2;
-            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "IsRestart", false } });
+            int level = PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(Constants.RestartToLevelProperty, out object lvl) ? (int)lvl : 2;
+            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { Constants.IsRestartProperty, false } });
             levelToLoad = level;
-            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "SelectedLevel", level } });
+            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { Constants.SelectedLevelProperty, level } });
         }
     }
 
@@ -73,7 +73,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient) return;
         
         levelToLoad = index;
-        PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "SelectedLevel", levelToLoad }, { "Reloading", false } });
+        PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { Constants.SelectedLevelProperty, levelToLoad }, { Constants.ReloadingProperty, false } });
 
         level1Button.interactable = false;
         level2Button.interactable = false;
@@ -84,7 +84,7 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient) return;
 
-        if (changedProps.TryGetValue("SelectedLevel", out object lvl) && (int)lvl == levelToLoad)
+        if (changedProps.TryGetValue(Constants.SelectedLevelProperty, out object lvl) && (int)lvl == levelToLoad)
         {
             if (PhotonNetwork.InRoom)
             {
@@ -104,7 +104,9 @@ public class MenuLevelController : MonoBehaviourPunCallbacks
 
     void BackToLobby()
     {
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom) PhotonNetwork.LeaveRoom();
-        UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNames.Lobby);
+        if (PhotonNetwork.IsMasterClient)
+        {
+            PhotonNetwork.LoadLevel(SceneNames.Room);
+        }
     }
 }

@@ -28,7 +28,6 @@ public class MazeGenerator : MonoBehaviourPun
     public Transform floorObject; 
     public Transform arenaCenter; 
 
-    // Runtime Calculations
     public int GridWidth { get; private set; }
     public int GridHeight { get; private set; }
     public float RealCellSizeX { get; private set; }
@@ -65,7 +64,7 @@ public class MazeGenerator : MonoBehaviourPun
         if (!PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom != null && !IsMazeReady)
         {
             yield return new WaitForSeconds(0.5f);
-            if (!IsMazeReady && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("MazeSeed", out object seedObj))
+            if (!IsMazeReady && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(Constants.MazeSeedProperty, out object seedObj))
             {
                 GenerateMaze((int)seedObj);
             }
@@ -128,7 +127,6 @@ public class MazeGenerator : MonoBehaviourPun
         }
         else
         {
-            Debug.LogError("[MazeGenerator] Bounds check failed. Using manual defaults.");
             GridWidth = manualWidth;
             GridHeight = manualHeight;
             RealCellSizeX = targetCellSize;
@@ -194,7 +192,7 @@ public class MazeGenerator : MonoBehaviourPun
         if (GridWidth == 0) InitializeDimensions();
 
         int seed = Random.Range(0, 100000);
-        PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "MazeSeed", seed } });
+        PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { Constants.MazeSeedProperty, seed } });
         GenerateMaze(seed);
         photonView?.RPC(nameof(SyncMazeSeed), RpcTarget.OthersBuffered, seed);
     }

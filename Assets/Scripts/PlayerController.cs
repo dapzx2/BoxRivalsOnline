@@ -10,7 +10,6 @@ public class PlayerController : MonoBehaviour
     public float airAcceleration = 60f;
     public float airDeceleration = 30f;
 
-    [Header("Audio")]
     [SerializeField] private AudioClip eatSmallSound;
     [SerializeField] private AudioClip eatBigSound;
 
@@ -43,20 +42,40 @@ public class PlayerController : MonoBehaviour
 
         if (photonView != null && photonView.IsMine)
         {
-            kamera = Camera.main.transform;
-            CameraController camScript = kamera.GetComponent<CameraController>();
-            if (camScript != null)
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
             {
-                camScript.currentTarget = transform;
-                camScript.isControlActive = true;
+                kamera = mainCam.transform;
+                CameraController camScript = kamera.GetComponent<CameraController>();
+                if (camScript != null)
+                {
+                    camScript.currentTarget = transform;
+                    camScript.isControlActive = true;
+                }
             }
+            else
+            {
+
+            }
+            
             GameManager.Instance?.UpdateScore(0);
         }
+
+        // OPTIMIZATION: Cache BoxSpawner once
+        if (cachedBoxSpawner == null) cachedBoxSpawner = FindObjectOfType<BoxSpawner>();
     }
 
     void Update()
     {
         if (photonView == null || !photonView.IsMine) return;
+        
+
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+        {
+            inputGerakan = Vector2.zero;
+            rb.velocity = new Vector3(0, rb.velocity.y, 0);
+            return;
+        }
 
         inputGerakan = Vector2.zero;
         if (Input.GetKey(KeyCode.W)) inputGerakan.y = 1f;
@@ -134,12 +153,12 @@ public class PlayerController : MonoBehaviour
         boxCollider.gameObject.SetActive(false);
 
         int currentScore = 0;
-        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("score", out object s)) currentScore = (int)s;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(Constants.PlayerScoreProperty, out object s)) currentScore = (int)s;
         
-        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "score", currentScore + scoreToAdd } });
+        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { Constants.PlayerScoreProperty, currentScore + scoreToAdd } });
 
-        if (cachedBoxSpawner == null) cachedBoxSpawner = FindObjectOfType<BoxSpawner>();
-        
+
+
         if (cachedBoxSpawner != null)
         {
             photonView.RPC(nameof(CmdDestroyBox), RpcTarget.MasterClient, boxView.ViewID);
@@ -151,7 +170,6 @@ public class PlayerController : MonoBehaviour
     {
         if (!PhotonNetwork.IsMasterClient) return;
         
-        if (cachedBoxSpawner == null) cachedBoxSpawner = FindObjectOfType<BoxSpawner>();
         if (cachedBoxSpawner != null)
         {
             cachedBoxSpawner.RpcDestroyBox(viewID);

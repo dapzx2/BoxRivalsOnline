@@ -1,4 +1,5 @@
 using UnityEngine;
+using Photon.Pun;
 
 public class RotatingObstacle : MonoBehaviour
 {
@@ -10,7 +11,19 @@ public class RotatingObstacle : MonoBehaviour
     [SerializeField] private float knockbackForce = 10f;
     [SerializeField] private bool enableKnockback = true;
 
-    void Update() => transform.Rotate(rotationAxis, rotationSpeed * Time.deltaTime);
+    private Quaternion startRotation;
+
+    void Start()
+    {
+        startRotation = transform.rotation;
+    }
+
+    void Update()
+    {
+        double time = PhotonNetwork.InRoom ? PhotonNetwork.Time : Time.time;
+        float angle = (float)time * rotationSpeed;
+        transform.rotation = startRotation * Quaternion.AngleAxis(angle, rotationAxis);
+    }
 
     private void OnCollisionEnter(Collision collision)
     {

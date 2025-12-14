@@ -15,6 +15,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     private int currentLevelIndex = 1;
     private PhotonView pv;
     private bool isGameOver;
+    public bool IsGameOver => isGameOver;
     private BoxSpawner boxSpawner;
     private MazeGenerator mazeGenerator;
     private UIManager uiManager;
@@ -46,6 +47,11 @@ public class GameManager : MonoBehaviourPunCallbacks
             Camera cam = Camera.main;
             if (cam != null) cam.gameObject.AddComponent<AudioListener>();
         }
+        
+        PhotonNetwork.SendRate = 60; 
+        PhotonNetwork.SerializationRate = 60; 
+        
+        Application.targetFrameRate = 60;
     }
 
     public override void OnEnable()
@@ -74,7 +80,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         uiManager = FindObjectOfType<UIManager>();
 
         currentLevelIndex = 1;
-        if (PhotonNetwork.CurrentRoom?.CustomProperties.TryGetValue("SelectedLevel", out object lvl) == true)
+        if (PhotonNetwork.CurrentRoom?.CustomProperties.TryGetValue(Constants.SelectedLevelProperty, out object lvl) == true)
         {
             currentLevelIndex = (int)lvl;
         }
@@ -105,11 +111,11 @@ public class GameManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        PhotonNetwork.LocalPlayer?.SetCustomProperties(new Hashtable { { "score", 0 } });
+        PhotonNetwork.LocalPlayer?.SetCustomProperties(new Hashtable { { Constants.PlayerScoreProperty, 0 } });
 
         if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom != null)
         {
-            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "gameRunning", true } });
+            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { Constants.GameRunningProperty, true } });
             SetupLevelContent();
         }
 
@@ -118,27 +124,29 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void SetupLevelContent()
     {
-        switch (currentLevelIndex)
+        if (currentLevelIndex == 2)
         {
-            case 2:
-                if (mazeGenerator != null)
-                {
-                    mazeGenerator.GenerateAndBuildMaze();
-                    boxSpawner?.SetBoxCounts(25, 5);
-                    boxSpawner?.SpawnBoxesWithMinimumDistance(mazeGenerator.GetFloorPositions());
-                }
-                else
-                {
-                    SetupDefaultBoxes();
-                }
-                break;
-            case 3:
-                if (boxSpawner != null) SpawnLevel3Boxes();
-                break;
-            default:
-                SetupDefaultBoxes();
-                break;
+            SetupMazeLevel();
         }
+        else if (currentLevelIndex == 3 && boxSpawner != null)
+        {
+            SpawnLevel3Boxes();
+        }
+        else
+        {
+            SetupDefaultBoxes();
+        }
+    }
+
+    void SetupMazeLevel()
+    {
+        if (mazeGenerator != null)
+        {
+            mazeGenerator.GenerateAndBuildMaze();
+            boxSpawner?.SetBoxCounts(25, 5);
+            boxSpawner?.SpawnBoxesWithMinimumDistance(mazeGenerator.GetFloorPositions());
+        }
+        else SetupDefaultBoxes();
     }
 
     void SetupDefaultBoxes()
@@ -152,24 +160,24 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void SpawnPlayer()
     {
-        switch (currentLevelIndex)
+        if (currentLevelIndex == 2 && mazeGenerator != null)
         {
-            case 2:
-                if (mazeGenerator != null) StartCoroutine(WaitForMazeAndSpawn(mazeGenerator));
-                else SpawnPlayersDefault();
-                break;
-            case 3:
-                SpawnLevel3Player();
-                break;
-            default:
-                SpawnPlayersDefault();
-                break;
+            StartCoroutine(WaitForMazeAndSpawn(mazeGenerator));
+        }
+        else if (currentLevelIndex == 3)
+        {
+            SpawnLevel3Player();
+        }
+        else
+        {
+            SpawnPlayersDefault();
         }
     }
 
     bool HasLocalPlayer()
     {
-        foreach (var player in FindObjectsOfType<PlayerController>())
+        var players = FindObjectsOfType<PlayerController>();
+        foreach (var player in players)
         {
             if (player.GetComponent<PhotonView>()?.IsMine == true) return true;
         }
@@ -193,7 +201,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (HasLocalPlayer()) return;
         Vector3 pos = PhotonNetwork.IsMasterClient ? new Vector3(-5, 3f, 0) : new Vector3(5, 3f, 0);
-        PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? "Pemain1" : "Pemain2", pos, Quaternion.identity);
+        PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? Constants.Player1Prefab : Constants.Player2Prefab, pos, Quaternion.identity);
     }
 
     void SpawnPlayersMaze(MazeGenerator mazeGen)
@@ -209,7 +217,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         Vector3 pos = positions[Random.Range(0, positions.Count)];
         pos.y = 2f;
-        PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? "Pemain1" : "Pemain2", pos, Quaternion.identity);
+        PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? Constants.Player1Prefab : Constants.Player2Prefab, pos, Quaternion.identity);
     }
 
     void SpawnLevel3Player()
@@ -217,12 +225,12 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (HasLocalPlayer()) return;
         float spawnY = GetLevel3SpawnY();
         Vector3 spawnPos = PhotonNetwork.IsMasterClient ? new Vector3(0, spawnY, -2) : new Vector3(0, spawnY, 2);
-        PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? "Pemain1" : "Pemain2", spawnPos, Quaternion.identity);
+        PhotonNetwork.Instantiate(PhotonNetwork.IsMasterClient ? Constants.Player1Prefab : Constants.Player2Prefab, spawnPos, Quaternion.identity);
     }
 
     public void UpdateScore(int newScore)
     {
-        PhotonNetwork.LocalPlayer?.SetCustomProperties(new Hashtable { { "score", newScore } });
+        PhotonNetwork.LocalPlayer?.SetCustomProperties(new Hashtable { { Constants.PlayerScoreProperty, newScore } });
     }
 
     public void EndGame()
@@ -247,7 +255,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     string DetermineWinner()
     {
         var players = PhotonNetwork.PlayerList;
-        int GetScore(int i) => players.Length > i && players[i].CustomProperties.TryGetValue("score", out object s) ? (int)s : 0;
+        int GetScore(int i) => players.Length > i && players[i].CustomProperties.TryGetValue(Constants.PlayerScoreProperty, out object s) ? (int)s : 0;
         
         int s1 = GetScore(0);
         int s2 = GetScore(1);
@@ -265,9 +273,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient || boxSpawner == null) return;
 
         string sceneName = SceneManager.GetActiveScene().name;
-        Vector3[] boxPositions = GetLevel3BoxPositions(sceneName);
+        List<Vector3> boxPositions = GetLevel3BoxPositions(sceneName);
 
-        boxSpawner.SetBoxCounts(boxPositions.Length, 0);
+
+
+        boxSpawner.SetBoxCounts(boxPositions.Count, 0);
         string normalPrefab = boxSpawner.boxPrefab != null ? boxSpawner.boxPrefab.name : "KotakKoleksi";
         string bonusPrefab = boxSpawner.boxBonusPrefab != null ? boxSpawner.boxBonusPrefab.name : "KotakBonus";
         
@@ -279,38 +289,29 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    Vector3[] GetLevel3BoxPositions(string sceneName)
+    List<Vector3> GetLevel3BoxPositions(string sceneName)
     {
-        if (sceneName == SceneNames.Level3_SkyPlatforms)
+        return sceneName switch
         {
-            return new Vector3[] {
+            SceneNames.Level3_SkyPlatforms => new List<Vector3> {
                 new Vector3(0, 1.5f, 0), new Vector3(12, 2.5f, 0), new Vector3(20, 3.5f, 5),
                 new Vector3(28, 2.5f, -3), new Vector3(35, 4.5f, 2), new Vector3(42, 3.5f, -5),
                 new Vector3(50, 5.5f, 0), new Vector3(58, 4.5f, 3), new Vector3(65, 6.5f, 0),
                 new Vector3(75, 6.5f, 0)
-            };
-        }
-        
-        if (sceneName == SceneNames.Level3_ObstacleRush)
-        {
-            return new Vector3[] {
-                new Vector3(0, 1.5f, 0), new Vector3(12, 2.5f, 0), new Vector3(22, 3f, 0),
+            },
+            SceneNames.Level3_ObstacleRush => new List<Vector3> {
+                new Vector3(0, 2.5f, 0), new Vector3(12, 3.5f, 0), new Vector3(22, 3.5f, 0),
                 new Vector3(32, 3.5f, 0), new Vector3(42, 4f, 0), new Vector3(52, 4.5f, 0),
                 new Vector3(62, 5f, 0), new Vector3(72, 5.5f, 0), new Vector3(82, 6f, 0),
                 new Vector3(92, 6.5f, 0)
-            };
-        }
-        
-        if (sceneName == SceneNames.Level3_RampRace)
-        {
-            return new Vector3[] {
+            },
+            SceneNames.Level3_RampRace => new List<Vector3> {
                 new Vector3(0, 6f, 0), new Vector3(25, 5f, 0), new Vector3(45, 7f, 0),
                 new Vector3(65, 9f, 0), new Vector3(85, 11f, 0), new Vector3(105, 13f, 0),
                 new Vector3(125, 15f, 0), new Vector3(135, 13f, 0)
-            };
-        }
-        
-        return new Vector3[] { new Vector3(0, 1.5f, 0) };
+            },
+            _ => new List<Vector3> { new Vector3(0, 1.5f, 0) }
+        };
     }
 
     Vector3 GetSafeBoxPosition(Vector3 originalPos, out bool wasOffset)
@@ -347,8 +348,33 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void RespawnPlayer(GameObject player)
     {
         if (player == null) return;
-        float spawnY = currentLevelIndex == 3 ? GetLevel3SpawnY() : 3f;
-        player.transform.position = new Vector3(0, spawnY, 0);
+
+        Vector3 respawnPos;
+        
+        if (currentLevelIndex == 2 && mazeGenerator != null && mazeGenerator.IsMazeReady)
+        {
+            var floors = mazeGenerator.GetFloorPositions();
+            if (floors != null && floors.Count > 0)
+            {
+                respawnPos = floors[Random.Range(0, floors.Count)];
+                respawnPos.y = 3f;
+            }
+            else
+            {
+                respawnPos = new Vector3(0, 3f, 0);
+            }
+        }
+        else if (currentLevelIndex == 3)
+        {
+            float spawnY = GetLevel3SpawnY();
+            respawnPos = new Vector3(0, spawnY, 0);
+        }
+        else
+        {
+            respawnPos = new Vector3(0, 3f, 0);
+        }
+
+        player.transform.position = respawnPos;
         
         Rigidbody rb = player.GetComponent<Rigidbody>();
         if (rb != null) rb.velocity = Vector3.zero;

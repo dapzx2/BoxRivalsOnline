@@ -54,7 +54,12 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     void StartGame()
     {
-        if (PhotonNetwork.IsMasterClient) SceneManager.LoadScene(SceneNames.MenuLevel);
+        if (PhotonNetwork.IsMasterClient)
+        {
+            PhotonNetwork.CurrentRoom.IsOpen = false;
+            PhotonNetwork.CurrentRoom.IsVisible = false;
+            PhotonNetwork.LoadLevel(SceneNames.MenuLevel);
+        }
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer) => UpdatePlayerListAndUI();
@@ -69,7 +74,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable changedProps)
     {
-        if (!PhotonNetwork.IsMasterClient && changedProps.TryGetValue("Reloading", out object r) && r is bool b && b)
+        if (!PhotonNetwork.IsMasterClient && changedProps.TryGetValue(Constants.ReloadingProperty, out object r) && r is bool b && b)
         {
             if (SceneManager.GetActiveScene().name != SceneNames.Room)
                 SceneManager.LoadScene(SceneNames.Room);

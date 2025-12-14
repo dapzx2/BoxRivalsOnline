@@ -10,4 +10,5 @@ public static class SceneNames
     public const string Level3_SkyPlatforms = "Level3_SkyPlatforms";
     public const string Level3_ObstacleRush = "Level3_ObstacleRush";
     public const string Level3_RampRace = "Level3_RampRace";
+    public const string MainMenu = "MainMenu";
 }

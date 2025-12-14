@@ -14,8 +14,11 @@ public class MapRouletteManager : MonoBehaviourPunCallbacks
     public Image[] mapCards;
     public TextMeshProUGUI selectionText;
     public GameObject particleEffect;
-    public float initialSpeed = 0.05f;
-    public float finalSpeed = 0.3f;
+    
+    [Header("Animation Settings")]
+    public float spinDuration = 3.432f;
+    public AudioSource rouletteAudio;
+    
 
     private int selectedMapIndex = -1;
     private bool isAnimating;
@@ -23,6 +26,10 @@ public class MapRouletteManager : MonoBehaviourPunCallbacks
     void Start()
     {
         if (particleEffect != null) particleEffect.SetActive(false);
+        
+        if (rouletteAudio == null) rouletteAudio = gameObject.AddComponent<AudioSource>();
+        if (rouletteAudio.clip == null) rouletteAudio.clip = Resources.Load<AudioClip>("Audio/memilih_map");
+
         if (PhotonNetwork.IsMasterClient)
         {
             RunShuffleBagLogic();
@@ -34,7 +41,7 @@ public class MapRouletteManager : MonoBehaviourPunCallbacks
         object availableMapsObj;
         string availableMapsStr = "";
         
-        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("AvailableLevel3Maps", out availableMapsObj))
+        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(Constants.AvailableLevel3MapsProperty, out availableMapsObj))
         {
             availableMapsStr = (string)availableMapsObj;
         }
@@ -50,6 +57,7 @@ public class MapRouletteManager : MonoBehaviourPunCallbacks
 
         if (availableIndices.Count == 0)
         {
+
             for (int i = 0; i < mapSceneNames.Length; i++) availableIndices.Add(i);
         }
 
@@ -59,7 +67,7 @@ public class MapRouletteManager : MonoBehaviourPunCallbacks
         availableIndices.RemoveAt(randomIdx);
 
         string newAvailableStr = string.Join(",", availableIndices);
-        PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable() { { "AvailableLevel3Maps", newAvailableStr } });
+        PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable() { { Constants.AvailableLevel3MapsProperty, newAvailableStr } });
 
         photonView.RPC(nameof(RpcStartRoulette), RpcTarget.AllBuffered, selectedMapIndex);
     }
@@ -75,24 +83,35 @@ public class MapRouletteManager : MonoBehaviourPunCallbacks
     {
         isAnimating = true;
         if (selectionText != null) selectionText.text = "Memilih Map...";
+        
+        if (rouletteAudio != null && rouletteAudio.clip != null) rouletteAudio.Play();
+
+        if (AudioManager.Instance != null) 
+        {
+            AudioManager.Instance.TriggerDuckMusic(spinDuration);
+        }
+
+        if (mapCards == null || mapCards.Length == 0)
+        {
+            yield break;
+        }
 
         int currentIdx = 0;
         int targetIdx = selectedMapIndex;
         int totalCards = mapCards.Length;
-        int minLoops = 4;
+        int minLoops = 20;
         
         int targetOffset = (targetIdx - currentIdx + totalCards) % totalCards;
         int totalSteps = (minLoops * totalCards) + targetOffset;
+
+        float delayPerStep = spinDuration / totalSteps;
 
         for (int i = 0; i < totalSteps; i++)
         {
             int highlightIdx = (currentIdx + i) % totalCards;
             HighlightCard(highlightIdx);
 
-            float progress = (float)i / totalSteps;
-            float delay = Mathf.Lerp(initialSpeed, finalSpeed, progress * progress);
-
-            yield return new WaitForSeconds(delay);
+            yield return new WaitForSeconds(delayPerStep);
         }
 
         HighlightCard(selectedMapIndex, true);

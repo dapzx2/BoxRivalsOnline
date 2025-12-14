@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Photon.Pun;
+using Photon.Realtime;
 
 public class LobbyManager : MonoBehaviourPunCallbacks
 {
@@ -16,11 +17,27 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         DisableUI();
         statusText.text = "Menghubungkan ke server...";
 
-        if (!PhotonNetwork.IsConnected) PhotonNetwork.ConnectUsingSettings();
-        else
+        if (!PhotonNetwork.IsConnected) 
         {
-            statusText.text = "Sudah terhubung.";
-            OnConnectedToMaster();
+            PhotonNetwork.ConnectUsingSettings();
+        }
+        else 
+        {
+            if (PhotonNetwork.InLobby)
+            {
+                statusText.text = "Sudah di Lobby.";
+                OnJoinedLobby();
+            }
+            else if (PhotonNetwork.NetworkClientState == ClientState.ConnectedToMasterServer)
+            {
+                statusText.text = "Terhubung ke Master.";
+                PhotonNetwork.JoinLobby();
+            }
+            else
+            {
+
+                statusText.text = "Menunggu status server: " + PhotonNetwork.NetworkClientState;
+            }
         }
 
         createRoomButton.onClick.AddListener(CreateRoom);
@@ -54,7 +71,13 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         DisableUI();
         statusText.text = "Membuat room...";
         PhotonNetwork.NickName = namaPemainInput.text;
-        PhotonNetwork.CreateRoom(namaRoomInput.text);
+
+        RoomOptions roomOptions = new RoomOptions();
+        roomOptions.MaxPlayers = 2;
+        roomOptions.IsVisible = true;
+        roomOptions.IsOpen = true;
+
+        PhotonNetwork.CreateRoom(namaRoomInput.text, roomOptions);
     }
 
     public void JoinRoom()
@@ -99,5 +122,17 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         statusText.text = "Gagal buat room: " + message;
         EnableUI();
+    }
+
+    public void BackToMainMenu()
+    {
+        if (AudioManager.Instance != null) AudioManager.Instance.PlayButtonSound();
+
+        if (PhotonNetwork.IsConnected)
+        {
+            PhotonNetwork.Disconnect();
+        }
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNames.MainMenu);
     }
 }
